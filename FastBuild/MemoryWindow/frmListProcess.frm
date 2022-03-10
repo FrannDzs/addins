@@ -273,13 +273,13 @@ End Sub
 
 Private Sub Form_Resize()
     On Error Resume Next
-    lv.Width = Me.Width - lv.Left - 200
-    lv.ColumnHeaders(3).Width = lv.Width - lv.ColumnHeaders(3).Left - 350
-    lv.Height = Me.Height - lv.Top - 500 - Command1.Height
+    lv.Width = Me.ScaleWidth - lv.Left - 50
+    lv.ColumnHeaders(3).Width = lv.Width - lv.ColumnHeaders(3).Left - 50
+    lv.Height = Me.ScaleHeight - lv.Top - 300 - Command1.Height
     lv2.Move lv.Left, lv.Top, lv.Width, lv.Height
-    lv2.ColumnHeaders(3).Width = lv.Width - lv.ColumnHeaders(3).Left - 350
-    Command1.Top = Me.Height - Command1.Height - 400
-    Command1.Left = Me.Width - Command1.Width - 400
+    lv2.ColumnHeaders(3).Width = lv.Width - lv.ColumnHeaders(3).Left - 50
+    Command1.Top = Me.ScaleHeight - Command1.Height - 100
+    Command1.Left = Me.ScaleWidth - Command1.Width - 100
     lblRefresh.Left = Command1.Left - lblRefresh.Width - 400
     lblRefresh.Top = Command1.Top
     txtSearch.Top = Command1.Top
