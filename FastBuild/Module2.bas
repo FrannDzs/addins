@@ -8,6 +8,7 @@ Public ShowPostBuildOutput As Long
 Public MemWindowExe As String
 Public CodeDBExe As String
 Public APIAddInExe As String
+Public ExternalDebugWindow As String
 
 Public Declare Function GetCurrentProcessId Lib "kernel32" () As Long
 

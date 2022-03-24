@@ -57,6 +57,10 @@ Dim mcbExecute As Office.CommandBarControl
 Private WithEvents mnuExecute As CommandBarEvents
 Attribute mnuExecute.VB_VarHelpID = -1
 
+Dim mcbDebugWindow As Office.CommandBarControl
+Private WithEvents mnuDebugWindow As CommandBarEvents
+Attribute mnuDebugWindow.VB_VarHelpID = -1
+
 Dim mcbAddref As Office.CommandBarControl
 Private WithEvents mnuAddref As CommandBarEvents
 Attribute mnuAddref.VB_VarHelpID = -1
@@ -155,6 +159,7 @@ Private Sub AddinInstance_OnConnection(ByVal Application As Object, ByVal Connec
         MemWindowExe = App.path & "\MemoryWindow\standalone.exe"
         CodeDBExe = App.path & "\CodeDB\CodeDB.exe"
         APIAddInExe = App.path & "\API_AddIn\API_AddIn.exe"
+        ExternalDebugWindow = App.path & "\PersistentDebugPrint.exe"
         
         ClearImmediateOnStart = GetSetting("fastbuild", "settings", "ClearImmediateOnStart", 0)
         ShowPostBuildOutput = GetSetting("fastbuild", "settings", "ShowPostBuildOutput", 1)
@@ -221,6 +226,17 @@ Private Sub AddinInstance_OnConnection(ByVal Application As Object, ByVal Connec
             If Not mcbApiAddin Is Nothing Then
                 Set mnuApiAddin = VBInstance.Events.CommandBarEvents(mcbApiAddin)
             End If
+        End If
+        
+        If FileExists(ExternalDebugWindow) Then
+            Set mcbDebugWindow = AddButton("External Debug Window", 106)
+            If Not mcbDebugWindow Is Nothing Then
+                Set mnuDebugWindow = VBInstance.Events.CommandBarEvents(mcbDebugWindow)
+            Else
+                'MsgBox "add debug window button failed"
+            End If
+        Else
+            'MsgBox "no ExternalDebugWindow:" & ExternalDebugWindow
         End If
         '-----------------------------------------------------------------------------
         
@@ -356,6 +372,9 @@ Private Sub AddinInstance_OnDisconnection(ByVal RemoveMode As AddInDesignerObjec
     '     Set mnuOpenHomeDir = Nothing
     'End If
     
+    mcbDebugWindow.Delete
+    showErr "mcbDebugWindow.Delete"
+        
     If Not mfrmAddIn Is Nothing Then Set mfrmAddIn = Nothing
     
     For Each f In Forms
@@ -513,6 +532,20 @@ Private Sub mnuCodeDB_Click(ByVal CommandBarControl As Object, handled As Boolea
     Else
         MsgBox "File not found: " & CodeDBExe
     End If
+End Sub
+
+Private Sub mnuDebugWindow_Click(ByVal CommandBarControl As Object, handled As Boolean, CancelDefault As Boolean)
+    On Error Resume Next
+    
+    If FileExists(ExternalDebugWindow) Then
+        Shell ExternalDebugWindow
+    End If
+        
+    If Err.Number <> 0 Then
+        MsgBox "ExternalDebugWindow not found? " & ExternalDebugWindow & vbCrLf & vbCrLf & _
+                "You can download it here: https://github.com/dzzie/libs/tree/master/_elroy/PersistentDebugPrint_mod1"
+    End If
+        
 End Sub
 
 Private Sub mnuFastBuildUI_Click(ByVal CommandBarControl As Object, handled As Boolean, CancelDefault As Boolean)
