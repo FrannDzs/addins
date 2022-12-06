@@ -42,6 +42,9 @@ Begin VB.Form frmDebugPrint
    Begin VB.Menu mnuClear 
       Caption         =   "Clear"
    End
+   Begin VB.Menu mnuCopy 
+      Caption         =   "Copy"
+   End
    Begin VB.Menu mnuSeparate 
       Caption         =   "Separate"
    End
@@ -186,6 +189,12 @@ End Sub
 
 Private Sub mnuClear_Click()
     txt.Text = vbNullString
+End Sub
+
+Private Sub mnuCopy_Click()
+    On Error Resume Next
+    Clipboard.Clear
+    Clipboard.SetText txt.Text
 End Sub
 
 Private Sub mnuOpenHomePage_Click()
