@@ -1,0 +1,12 @@
+    [
+      odl,
+      uuid(000204F0-0000-0000-C000-000000000046),
+      nonextensible
+    ]
+    interface IVBPrint : IUnknown {
+        HRESULT _stdcall WriteText([in] BSTR strText);
+        [propput]
+        HRESULT _stdcall Column([in] long retVal);
+        [propget]
+        HRESULT _stdcall Column([out, retval] long* retVal);
+    };

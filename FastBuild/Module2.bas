@@ -5,6 +5,8 @@ Public VBInstance As VBIDE.VBE
 Public ClearImmediateOnStart As Long
 Public ShowPostBuildOutput As Long
 
+Public dbgIntercept As New CDebugIntercept
+
 Public MemWindowExe As String
 Public CodeDBExe As String
 Public APIAddInExe As String
@@ -333,13 +335,13 @@ Function GetFileReport(fpath As String) As String
 
 End Function
 
-Sub push(ary, value) 'this modifies parent ary object
-    On Error GoTo init
-    x = UBound(ary) '<-throws Error If Not initalized
+Sub push(ary, Value) 'this modifies parent ary object
+    On Error GoTo Init
+    X = UBound(ary) '<-throws Error If Not initalized
     ReDim Preserve ary(UBound(ary) + 1)
-    ary(UBound(ary)) = value
+    ary(UBound(ary)) = Value
     Exit Sub
-init: ReDim ary(0): ary(0) = value
+Init: ReDim ary(0): ary(0) = Value
 End Sub
 
 Public Function FileSize(fpath As String) As String

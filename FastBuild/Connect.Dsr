@@ -159,7 +159,7 @@ Private Sub AddinInstance_OnConnection(ByVal Application As Object, ByVal Connec
         MemWindowExe = App.path & "\MemoryWindow\standalone.exe"
         CodeDBExe = App.path & "\CodeDB\CodeDB.exe"
         APIAddInExe = App.path & "\API_AddIn\API_AddIn.exe"
-        ExternalDebugWindow = App.path & "\PersistentDebugPrint.exe"
+        ExternalDebugWindow = App.path & "\DbgWindow\DbgWindow.exe"
         
         ClearImmediateOnStart = GetSetting("fastbuild", "settings", "ClearImmediateOnStart", 0)
         ShowPostBuildOutput = GetSetting("fastbuild", "settings", "ShowPostBuildOutput", 1)
@@ -278,9 +278,9 @@ error_handler:
     
 End Sub
 
-Function showErr(x)
+Function showErr(X)
     If Err.Number <> 0 Then
-        Debug.Print x & " Err: " & Err.Description
+        Debug.Print X & " Err: " & Err.Description
         Err.Clear
     End If
 End Function
@@ -628,7 +628,7 @@ Private Function AddButton(caption As String, resImg As Long) As Office.CommandB
     
     On Error Resume Next
     
-1    If VBInstance.CommandBars.Count = 0 Then VBInstance.CommandBars.Add temporary:=True
+1    If VBInstance.CommandBars.count = 0 Then VBInstance.CommandBars.Add temporary:=True
 
     orgData = Clipboard.GetText
     Clipboard.Clear
@@ -711,13 +711,13 @@ Private Function AddrefMenu(caption As String, Optional menuName As String = "&P
     'On Error Resume Next
 
     'this accounts for if the menuName is not present..
-    For i = 1 To VBInstance.CommandBars(1).Controls.Count
+    For i = 1 To VBInstance.CommandBars(1).Controls.count
           If VBInstance.CommandBars(1).Controls(i).caption = menuName Then
                 Exit For
           End If
     Next
 
-    If i > VBInstance.CommandBars(1).Controls.Count Then
+    If i > VBInstance.CommandBars(1).Controls.count Then
         Debug.Print "AddrefMenu not found: " & menuName
         Exit Function
     End If
@@ -741,12 +741,12 @@ Private Function AddrefMenu(caption As String, Optional menuName As String = "&P
     
     If Len(afterItem) > 0 Then
     
-        For j = 1 To VBInstance.CommandBars(1).Controls(i).Controls.Count
+        For j = 1 To VBInstance.CommandBars(1).Controls(i).Controls.count
             If VBInstance.CommandBars(1).Controls(i).Controls(j).caption = afterItem Then Exit For
             'Debug.Print VBInstance.CommandBars(1).Controls(i).Controls(j).caption
         Next
 
-        If j > VBInstance.CommandBars(1).Controls(i).Controls.Count Then
+        If j > VBInstance.CommandBars(1).Controls(i).Controls.count Then
             Debug.Print "AddrefMenu subitem not found: " & afterItem & " (adding to end)"
             'j = VBInstance.CommandBars(1).Controls(i).Controls.Count - 3
             ' Set AddrefMenu = VBInstance.CommandBars(1).Controls(i).Controls.Add()

@@ -13,26 +13,34 @@ Begin VB.Form frmAddIn
    ScaleHeight     =   4950
    ScaleWidth      =   10050
    StartUpPosition =   2  'CenterScreen
+   Begin VB.CheckBox chkRedirDbgPrint 
+      Caption         =   "Redir Debug"
+      Height          =   255
+      Left            =   6000
+      TabIndex        =   21
+      Top             =   1380
+      Width           =   1215
+   End
    Begin VB.CheckBox chkConsoleApp 
       Caption         =   "Console App"
       Height          =   315
-      Left            =   5760
+      Left            =   4740
       TabIndex        =   20
       Top             =   1380
       Width           =   1335
    End
    Begin VB.CheckBox chkDisplayAsHex 
-      Caption         =   "ints as hex in dbg tooltips"
+      Caption         =   "ints ->  hex tooltips"
       Height          =   315
-      Left            =   150
+      Left            =   120
       TabIndex        =   19
       Top             =   1350
-      Width           =   2190
+      Width           =   1650
    End
    Begin VB.CheckBox chkShowPostBuildOutput 
       Caption         =   "Show Build Output"
       Height          =   195
-      Left            =   2340
+      Left            =   1800
       TabIndex        =   18
       Top             =   1395
       Width           =   1725
@@ -72,13 +80,13 @@ Begin VB.Form frmAddIn
       Width           =   6360
    End
    Begin VB.CheckBox chkClearImmediate 
-      Caption         =   "Clear Immediate"
+      Caption         =   "Clear Imm"
       Height          =   375
-      Left            =   4140
+      Left            =   3660
       TabIndex        =   14
       Top             =   1320
       Visible         =   0   'False
-      Width           =   1455
+      Width           =   1095
    End
    Begin VB.CommandButton Command2 
       Caption         =   "Last CMD Output"
@@ -299,25 +307,34 @@ Dim loaded As Boolean
 
 Private Sub chkConsoleApp_Click()
     On Error Resume Next
-    VBInstance.ActiveVBProject.WriteProperty "fastBuild", "IsConsoleApp", chkConsoleApp.value
+    VBInstance.ActiveVBProject.WriteProperty "fastBuild", "IsConsoleApp", chkConsoleApp.Value
 End Sub
 
 Private Sub chkDisplayAsHex_Click()
         
     If Not loaded Then Exit Sub
     
-    If chkDisplayAsHex.value = 0 Then
+    If chkDisplayAsHex.Value = 0 Then
         SaveSetting "FastBuild", "Settings", "DisplayAsHex", 0
     Else
         SaveSetting "FastBuild", "Settings", "DisplayAsHex", 1
         If Not LoadHexToolTipsDll() Then
             MsgBox "Could not find hextooTip.dll?"
-            chkDisplayAsHex.value = 0
+            chkDisplayAsHex.Value = 0
         End If
     End If
     
 End Sub
 
+
+Private Sub chkRedirDbgPrint_Click()
+    If Not loaded Then Exit Sub
+    If chkRedirDbgPrint.Value = vbChecked Then
+         dbgIntercept.Enable
+    Else
+        dbgIntercept.Disable
+    End If
+End Sub
 
 'Private Sub chkClearImmediate_Click()
 '
@@ -331,8 +348,8 @@ End Sub
 'End Sub
 
 Private Sub chkShowPostBuildOutput_Click()
-    ShowPostBuildOutput = chkShowPostBuildOutput.value
-    SaveSetting "fastbuild", "settings", "ShowPostBuildOutput", chkShowPostBuildOutput.value
+    ShowPostBuildOutput = chkShowPostBuildOutput.Value
+    SaveSetting "fastbuild", "settings", "ShowPostBuildOutput", chkShowPostBuildOutput.Value
 End Sub
 
 Private Sub cmdSaveExec_Click()
@@ -391,21 +408,22 @@ End Sub
 
 Private Sub Form_Load()
     On Error Resume Next
-    Dim x
+    Dim X
     
     If isBuildPathSet() Then
         txtBuildPath = VBInstance.ActiveVBProject.ReadProperty("fastBuild", "fullPath")
     End If
         
     txtExecute = VBInstance.ActiveVBProject.ReadProperty("fastBuild", "ExecBtnCmdLine")
-    chkConsoleApp.value = CInt(VBInstance.ActiveVBProject.ReadProperty("fastBuild", "IsConsoleApp"))
+    chkConsoleApp.Value = CInt(VBInstance.ActiveVBProject.ReadProperty("fastBuild", "IsConsoleApp"))
     
-    chkClearImmediate.value = ClearImmediateOnStart
-    chkShowPostBuildOutput.value = ShowPostBuildOutput
+    chkClearImmediate.Value = ClearImmediateOnStart
+    chkShowPostBuildOutput.Value = ShowPostBuildOutput
     
     txtPostBuild = GetPostBuildCommand
     
-    chkDisplayAsHex.value = IIf(GetSetting("FastBuild", "Settings", "DisplayAsHex", 0) = "1", 1, 0)
+    chkDisplayAsHex.Value = IIf(GetSetting("FastBuild", "Settings", "DisplayAsHex", 0) = "1", 1, 0)
+    chkRedirDbgPrint.Value = IIf(dbgIntercept.isActive, 1, 0)
     
     loaded = True
     
@@ -426,11 +444,11 @@ End Sub
 
 
 
-Private Sub txtBuildPath_OLEDragDrop(data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, Y As Single)
+Private Sub txtBuildPath_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
     On Error Resume Next
     Dim pth As String
     
-    pth = data.Files(1)
+    pth = Data.Files(1)
     
     If FileExists(pth) Then
         txtBuildPath = pth
@@ -443,12 +461,12 @@ Private Sub txtBuildPath_OLEDragDrop(data As DataObject, Effect As Long, Button 
     
 End Sub
 
-Private Sub txtPostBuild_OLEDragDrop(data As DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, Y As Single)
+Private Sub txtPostBuild_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
     
     On Error Resume Next
     Dim pth As String
     
-    pth = data.Files(1)
+    pth = Data.Files(1)
     
     If FileExists(pth) Then
         txtPostBuild = pth

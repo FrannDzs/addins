@@ -2,7 +2,7 @@ VERSION 5.00
 Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "COMDLG32.OCX"
 Begin VB.Form frmDebugPrint 
    Caption         =   "Persistent Debug Print Window"
-   ClientHeight    =   5295
+   ClientHeight    =   4725
    ClientLeft      =   1005
    ClientTop       =   3060
    ClientWidth     =   7635
@@ -18,41 +18,8 @@ Begin VB.Form frmDebugPrint
    HasDC           =   0   'False
    Icon            =   "PersistentDebugPrint.frx":0000
    LinkTopic       =   "Form1"
-   ScaleHeight     =   5295
+   ScaleHeight     =   4725
    ScaleWidth      =   7635
-   Begin VB.Frame fraSearch 
-      BorderStyle     =   0  'None
-      Height          =   375
-      Left            =   180
-      TabIndex        =   2
-      Top             =   4740
-      Width           =   7395
-      Begin VB.TextBox txtFilter 
-         Height          =   330
-         Left            =   960
-         TabIndex        =   4
-         Top             =   60
-         Width           =   6315
-      End
-      Begin VB.Label Label1 
-         Caption         =   "Filter"
-         Height          =   255
-         Left            =   0
-         TabIndex        =   3
-         Top             =   60
-         Width           =   915
-      End
-   End
-   Begin VB.CommandButton cmdContinue 
-      BackColor       =   &H0000FFFF&
-      Caption         =   "Continue"
-      Height          =   495
-      Left            =   5580
-      Style           =   1  'Graphical
-      TabIndex        =   1
-      Top             =   180
-      Width           =   1515
-   End
    Begin MSComDlg.CommonDialog cdl 
       Left            =   3555
       Top             =   2115
@@ -140,7 +107,6 @@ Private Declare Function SendMessageW Lib "user32" (ByVal hWnd As Long, ByVal uM
 Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As RECT) As Long
 Private Declare Function GetMonitorInfo Lib "user32.dll" Alias "GetMonitorInfoA" (ByVal hMonitor As Long, ByRef lpmi As MONITORINFO) As Long
 Private Declare Function MonitorFromWindow Lib "user32.dll" (ByVal hWnd As Long, ByVal dwFlags As Long) As Long
-Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 
 Private Declare Function ShellExecuteA Lib "shell32.dll" ( _
     ByVal hWnd As Long, _
@@ -153,63 +119,19 @@ Private Declare Function ShellExecuteA Lib "shell32.dll" ( _
 Private Declare Sub SetWindowPos Lib "user32" (ByVal hWnd As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal Y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long)
 Private Const HWND_TOPMOST = -1
 
-Private Declare Function ChangeWindowMessageFilter Lib "user32" (ByVal msg As Long, ByVal flag As Long) As Long 'Vista+
-Const WM_COPYDATA = &H4A
-Const WM_COPYGLOBALDATA = &H49
-
-Dim msgs() As String
-
-'Private WithEvents subclass As spSubClass.clsSubClass
-
-'Private Sub subclass_MessageReceived(hwnd As Long, wMsg As Long, wParam As Long, lParam As Long, Cancel As Boolean)
-'    If wMsg <> &H4A Then Exit Sub 'copy data
-'
-'    Dim CopyData As COPYDATASTRUCT
-'    Dim Buffer(1 To 2048) As Byte
-'    Dim temp As String
-'
-'    On Error Resume Next
-'
-'    CopyMemory CopyData, ByVal lParam, Len(CopyData)
-'
-'    If CopyData.dwFlag = 3 Then
-'        CopyMemory Buffer(1), ByVal CopyData.lpData, CopyData.cbSize
-'        temp = StrConv(Buffer, vbUnicode)
-'        temp = Left$(temp, InStr(1, temp, Chr$(0)) - 1)
-'        temp = Trim(temp)
-'        frmDebugPrint.Out temp
-'    End If
-'
-'End Sub
-
-Public Function AllowCopyDataAcrossUIPI()
-    Dim a, b, c
-    Const MSGFLT_ADD = 1
-    'a = ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD)
-    b = ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD) 'we still need this for IPC to get hook data...
-    c = ChangeWindowMessageFilter(WM_COPYGLOBALDATA, MSGFLT_ADD)
-    'MsgBox a & " " & b & " " & c
-End Function
-
 Sub SetWindowTopMost(f As Form, Optional onTop As Boolean = True)
    SetWindowPos f.hWnd, IIf(onTop, HWND_TOPMOST, -2), f.Left / 15, _
         f.Top / 15, f.Width / 15, _
         f.Height / 15, Empty
 End Sub
 
-Private Sub cmdContinue_Click()
-    cmdContinue.Visible = False
-End Sub
 
 Private Sub Form_Load()
-        
-        On Error Resume Next
+    On Error Resume Next
         
         If App.PrevInstance Then End
         
-        cmdContinue.Visible = False
-        SaveSetting "dbgWindow", "settings", "path", App.Path & "\PersistentDebugPrint.exe"
-        SaveSetting "dbgWindow", "settings", "hwnd", Me.hWnd
+        SaveSetting "dbgWindow", "settings", "path", App.Path & "\dbgWindow.exe"
         
         If GetSetting("dbgWindow", "settings", "topMost", 0) <> 0 Then
             mnuTopMost.Checked = True
@@ -220,7 +142,6 @@ Private Sub Form_Load()
         Me.Top = GetSetting(App.Title, "Settings", "Top", 0&)
         Me.Width = GetSetting(App.Title, "Settings", "Width", 6600&)
         Me.Height = GetSetting(App.Title, "Settings", "Height", 6600&)
-        
         If Not FormIsFullyOnMonitor(Me) Then
             Me.Left = 0&
             Me.Top = 0&
@@ -237,14 +158,8 @@ Private Sub Form_Load()
         txt.ForeColor = GetSetting(App.Title, "Settings", "ForeCOlor", vbBlack)
         mnuTimeStamp.Checked = GetSetting(App.Title, "Settings", "TimeStamp", 0)
     On Error GoTo 0
-    
-    'NOTE THESE MUST RUN AT SAME PRIVLEDGE LEVEL
-    AllowCopyDataAcrossUIPI
+    '
     SubclassFormToReceiveStringMsg Me
-    
-    'Set subclass = New spSubClass.clsSubClass
-    'subclass.AttachMessage Me.hwnd, &H4A
-    
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
@@ -267,28 +182,19 @@ Private Sub Form_Unload(Cancel As Integer)
 End Sub
 
 Private Sub Form_Resize()
-    On Error Resume Next
     If Not Me.WindowState = vbMinimized Then
-        txt.Move 0&, 0&, Me.ScaleWidth, Me.ScaleHeight - fraSearch.Height - 200
-        fraSearch.Top = Me.ScaleHeight - fraSearch.Height - 100
-        fraSearch.Width = Me.ScaleWidth
-        txtFilter.Width = Me.ScaleWidth - txtFilter.Left - 300
+        txt.Move 0&, 0&, Me.ScaleWidth, Me.ScaleHeight
     End If
 End Sub
 
 Private Sub mnuClear_Click()
-    Erase msgs
     txt.Text = vbNullString
 End Sub
 
 Private Sub mnuCopy_Click()
     On Error Resume Next
     Clipboard.Clear
-    If txt.SelLength > 0 Then
-         Clipboard.SetText txt.SelText
-    Else
-        Clipboard.SetText txt.Text
-    End If
+    Clipboard.SetText txt.Text
 End Sub
 
 Private Sub mnuOpenHomePage_Click()
@@ -298,7 +204,7 @@ Private Sub mnuOpenHomePage_Click()
 End Sub
 
 Private Sub mnuSeparate_Click()
-    Out "<div>"
+     Out "<div>"
 End Sub
 
 Private Sub mnuFont_Click()
@@ -352,50 +258,30 @@ Private Sub mnuReset_Click()
 End Sub
 
 Public Sub Out(s As String, Optional bHoldLine As Boolean)
-    
+
     Dim supressTimestamp As Boolean
-    
-    'so apparently this trick doesnt work when SetWindowSubclass is used...
-    If s = "<pause>" Or s = "<stop>" Then
-        cmdContinue.Visible = True
-        While Not cmdContinue.Visible
-            DoEvents
-            Sleep 15
-        Wend
-        Exit Sub
-    End If
     
     If s = "<div>" Then
         s = vbCrLf & String(50, "-") & vbCrLf
         supressTimestamp = True
     End If
     
-    If s = "<cls>" Or s = "<clear>" Then
-        Erase msgs
-        txt.Text = Empty
+    If s = "<cls>" Then
+           txt.Text = Empty
     Else
     
         If mnuTimeStamp.Checked And Not supressTimestamp Then
             s = Format(Now, "hh:nn:ss> ") & s
         End If
 
-        push msgs, s
-        
-        If Len(Trim(txtFilter)) > 0 Then
-            If InStr(1, s, txtFilter, vbTextCompare) > 0 Then
-                AppendTxt s
-            End If
+        SendMessageW txt.hWnd, EM_SETSEL, &H7FFFFFFF, ByVal &H7FFFFFFF          ' txt.SelStart = &H7FFFFFFF
+        If bHoldLine Then
+            SendMessageW txt.hWnd, EM_REPLACESEL, 0, ByVal StrPtr(s)            ' txt.SelText = s
         Else
-            AppendTxt s
+            SendMessageW txt.hWnd, EM_REPLACESEL, 0, ByVal StrPtr(s & vbCrLf)   ' txt.SelText = s & vbCrLf
         End If
-        
     End If
     
-End Sub
-
-Sub AppendTxt(s As String)
-    SendMessageW txt.hWnd, EM_SETSEL, &H7FFFFFFF, ByVal &H7FFFFFFF          ' txt.SelStart = &H7FFFFFFF
-    SendMessageW txt.hWnd, EM_REPLACESEL, 0, ByVal StrPtr(s & vbCrLf)   ' txt.SelText = s & vbCrLf
 End Sub
 
 Private Function FormIsFullyOnMonitor(frm As Form) As Boolean
@@ -428,34 +314,4 @@ End Sub
 Private Sub mnuTopMost_Click()
     mnuTopMost.Checked = Not mnuTopMost.Checked
     SetWindowTopMost Me, mnuTopMost.Checked
-End Sub
-
-Sub push(ary, value) 'this modifies parent ary object
-    On Error GoTo init
-    Dim x As Long
-    x = UBound(ary) '<-throws Error If Not initalized
-    ReDim Preserve ary(UBound(ary) + 1)
-    ary(UBound(ary)) = value
-    Exit Sub
-init:     ReDim ary(0): ary(0) = value
-End Sub
-
-Private Sub txtFilter_Change()
-
-    On Error Resume Next
-    
-    Dim x, f() As String
-    
-    If Len(Trim(txtFilter)) = 0 Then
-        txt = Join(msgs, vbCrLf)
-    Else
-        For Each x In msgs
-            If InStr(1, x, txtFilter, vbTextCompare) > 0 Then
-                push f, x
-            End If
-        Next
-        txt = UBound(f) & " results: " & vbCrLf & vbCrLf
-        AppendTxt Join(f, vbCrLf)
-    End If
-    
 End Sub
