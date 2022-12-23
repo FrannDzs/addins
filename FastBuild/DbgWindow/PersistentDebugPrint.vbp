@@ -39,4 +39,4 @@ MaxNumberOfThreads=1
 DebugStartupOption=0
 
 [fastBuild]
-fullPath=.\dbgWindow.exe
+fullPath=%ap%\dbgWindow.exe

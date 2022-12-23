@@ -36,6 +36,16 @@ Begin VB.Form frmDebugPrint
       End
       Begin VB.Label Label1 
          Caption         =   "Filter"
+         BeginProperty Font 
+            Name            =   "Fixedsys"
+            Size            =   9
+            Charset         =   0
+            Weight          =   400
+            Underline       =   -1  'True
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   0
          TabIndex        =   3
@@ -245,7 +255,21 @@ Private Sub Form_Load()
     'Set subclass = New spSubClass.clsSubClass
     'subclass.AttachMessage Me.hwnd, &H4A
     
+    If IsIde Then
+        push msgs, "this is message 1"
+        push msgs, "i like tacos"
+        push msgs, "ack ack adak"
+        txt = Join(msgs, vbCrLf)
+    End If
+    
 End Sub
+
+
+Function IsIde() As Boolean
+    On Error GoTo out
+    Debug.Print 1 / 0
+out: IsIde = Err
+End Function
 
 Private Sub Form_Unload(Cancel As Integer)
     SaveSetting App.Title, "Settings", "Left", Me.Left
@@ -276,6 +300,11 @@ Private Sub Form_Resize()
     End If
 End Sub
 
+Private Sub Label1_Click()
+    Const help = "Supports multiple criteria as CSV\nIf first char is - then its all a subtractive filter"
+    MsgBox Replace(help, "\n", vbCrLf), vbInformation
+End Sub
+
 Private Sub mnuClear_Click()
     Erase msgs
     txt.Text = vbNullString
@@ -298,7 +327,7 @@ Private Sub mnuOpenHomePage_Click()
 End Sub
 
 Private Sub mnuSeparate_Click()
-    Out "<div>"
+    out "<div>"
 End Sub
 
 Private Sub mnuFont_Click()
@@ -351,7 +380,7 @@ Private Sub mnuReset_Click()
         SetWindowTopMost Me, False
 End Sub
 
-Public Sub Out(s As String, Optional bHoldLine As Boolean)
+Public Sub out(s As String, Optional bHoldLine As Boolean)
     
     Dim supressTimestamp As Boolean
     
@@ -440,22 +469,103 @@ Sub push(ary, value) 'this modifies parent ary object
 init:     ReDim ary(0): ary(0) = value
 End Sub
 
+Function AryIsEmpty(ary) As Boolean
+  On Error GoTo oops
+    Dim i As Long
+    i = UBound(ary)  '<- throws error if not initalized
+    AryIsEmpty = False
+  Exit Function
+oops: AryIsEmpty = True
+End Function
+
+Function doSubtractiveFilter()
+    Dim x, f(), matches() As String, m, found As Boolean
+    
+    x = Trim(txtFilter)
+    If Len(x) = 1 Then Exit Function
+    
+    x = Trim(Mid(x, 2))
+    If InStr(x, ",") > 0 Then
+        matches = Split(x, ",")
+    Else
+        push matches, x
+    End If
+
+    For Each x In msgs
+        found = False
+        For Each m In matches
+            If Len(m) > 0 Then
+                If InStr(1, x, m, vbTextCompare) > 0 Then
+                    found = True
+                    Exit For
+                End If
+            End If
+        Next
+        If Not found Then push f, x
+    Next
+    
+    If AryIsEmpty(f) Then
+        txt = "0 results"
+    Else
+        txt = (UBound(f) + 1) & " results: " & vbCrLf & vbCrLf
+        AppendTxt Join(f, vbCrLf)
+    End If
+            
+            
+End Function
+
+Function doFilter()
+    Dim x, f(), matches() As String, m, found As Boolean
+    
+    x = Trim(txtFilter)
+    
+    If InStr(x, ",") > 0 Then
+        matches = Split(x, ",")
+    Else
+        push matches, x
+    End If
+
+    For Each x In msgs
+        found = False
+        For Each m In matches
+            If Len(m) > 0 Then
+                If InStr(1, x, m, vbTextCompare) > 0 Then
+                    found = True
+                    Exit For
+                End If
+            End If
+        Next
+        If found Then push f, x
+    Next
+    
+    If AryIsEmpty(f) Then
+        txt = "0 results"
+    Else
+        txt = (UBound(f) + 1) & " results: " & vbCrLf & vbCrLf
+        AppendTxt Join(f, vbCrLf)
+    End If
+            
+            
+End Function
+
 Private Sub txtFilter_Change()
 
-    On Error Resume Next
+    'On Error Resume Next
     
-    Dim x, f() As String
+    Dim x, f()
     
     If Len(Trim(txtFilter)) = 0 Then
         txt = Join(msgs, vbCrLf)
     Else
-        For Each x In msgs
-            If InStr(1, x, txtFilter, vbTextCompare) > 0 Then
-                push f, x
-            End If
-        Next
-        txt = UBound(f) & " results: " & vbCrLf & vbCrLf
-        AppendTxt Join(f, vbCrLf)
+    
+        If AryIsEmpty(msgs) Then Exit Sub
+            
+        If Left(txtFilter, 1) = "-" Then
+            doSubtractiveFilter
+        Else
+            doFilter
+        End If
+        
     End If
     
 End Sub
