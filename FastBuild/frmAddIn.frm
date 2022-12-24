@@ -2,47 +2,47 @@ VERSION 5.00
 Begin VB.Form frmAddIn 
    BorderStyle     =   1  'Fixed Single
    Caption         =   "Fast Build Addin             http://sandsprite.com"
-   ClientHeight    =   4950
+   ClientHeight    =   5310
    ClientLeft      =   150
    ClientTop       =   435
-   ClientWidth     =   10050
+   ClientWidth     =   12135
    KeyPreview      =   -1  'True
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   4950
-   ScaleWidth      =   10050
+   ScaleHeight     =   5310
+   ScaleWidth      =   12135
    StartUpPosition =   2  'CenterScreen
    Begin VB.CheckBox chkRedirDbgPrint 
-      Caption         =   "Redir Debug"
+      Caption         =   "Redir Debug.Print"
       Height          =   255
-      Left            =   6000
+      Left            =   10140
       TabIndex        =   21
       Top             =   1380
-      Width           =   1215
+      Width           =   1815
    End
    Begin VB.CheckBox chkConsoleApp 
       Caption         =   "Console App"
       Height          =   315
-      Left            =   4740
+      Left            =   10140
       TabIndex        =   20
-      Top             =   1380
-      Width           =   1335
+      Top             =   960
+      Width           =   1635
    End
    Begin VB.CheckBox chkDisplayAsHex 
       Caption         =   "ints ->  hex tooltips"
       Height          =   315
-      Left            =   120
+      Left            =   10140
       TabIndex        =   19
-      Top             =   1350
+      Top             =   120
       Width           =   1650
    End
    Begin VB.CheckBox chkShowPostBuildOutput 
       Caption         =   "Show Build Output"
       Height          =   195
-      Left            =   1800
+      Left            =   10140
       TabIndex        =   18
-      Top             =   1395
+      Top             =   600
       Width           =   1725
    End
    Begin VB.CommandButton cmdSaveExec 
@@ -80,28 +80,27 @@ Begin VB.Form frmAddIn
       Width           =   6360
    End
    Begin VB.CheckBox chkClearImmediate 
-      Caption         =   "Clear Imm"
-      Height          =   375
-      Left            =   3660
+      Caption         =   "Clear on start"
+      Height          =   315
+      Left            =   10380
       TabIndex        =   14
-      Top             =   1320
-      Visible         =   0   'False
-      Width           =   1095
+      Top             =   1740
+      Width           =   1275
    End
    Begin VB.CommandButton Command2 
       Caption         =   "Last CMD Output"
       Height          =   285
-      Left            =   7155
+      Left            =   2400
       TabIndex        =   13
-      Top             =   1350
+      Top             =   1320
       Width           =   1590
    End
    Begin VB.CommandButton cmdTest 
       Caption         =   "Test"
       Height          =   285
-      Left            =   8865
+      Left            =   4080
       TabIndex        =   12
-      Top             =   1350
+      Top             =   1320
       Width           =   1095
    End
    Begin VB.CommandButton Command1 
@@ -149,19 +148,19 @@ Begin VB.Form frmAddIn
          Strikethrough   =   0   'False
       EndProperty
       Height          =   3105
-      Left            =   90
+      Left            =   60
       MultiLine       =   -1  'True
       ScrollBars      =   2  'Vertical
       TabIndex        =   7
-      Top             =   1770
-      Width           =   9870
+      Top             =   2100
+      Width           =   9930
    End
    Begin VB.Frame Frame1 
       BorderStyle     =   0  'None
       Height          =   510
-      Left            =   135
+      Left            =   180
       TabIndex        =   4
-      Top             =   7425
+      Top             =   7740
       Width           =   9825
       Begin VB.CommandButton cmdAbout 
          Caption         =   "About"
@@ -233,10 +232,28 @@ Begin VB.Form frmAddIn
          Strikethrough   =   0   'False
       EndProperty
       Height          =   2205
-      Left            =   135
+      Left            =   120
       TabIndex        =   0
-      Top             =   5130
+      Top             =   5460
       Width           =   9825
+   End
+   Begin VB.Label lblClearStartHelp 
+      Caption         =   "?"
+      BeginProperty Font 
+         Name            =   "MS Sans Serif"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   -1  'True
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      ForeColor       =   &H00FF0000&
+      Height          =   195
+      Left            =   11760
+      TabIndex        =   22
+      Top             =   1800
+      Width           =   195
    End
    Begin VB.Label Label1 
       Caption         =   "Execute Btn CmdLine:"
@@ -304,7 +321,6 @@ Attribute VB_Exposed = False
 '
 Dim loaded As Boolean
 
-
 Private Sub chkConsoleApp_Click()
     On Error Resume Next
     VBInstance.ActiveVBProject.WriteProperty "fastBuild", "IsConsoleApp", chkConsoleApp.Value
@@ -336,16 +352,16 @@ Private Sub chkRedirDbgPrint_Click()
     End If
 End Sub
 
-'Private Sub chkClearImmediate_Click()
-'
-'    ClearImmediateOnStart = chkClearImmediate.value
-'    SaveSetting "fastbuild", "settings", "ClearImmediateOnStart", chkClearImmediate.value
-'
-'    If loaded And ClearImmediateOnStart = 1 Then
-'        MsgBox "Change takes effect next time to start IDE"
-'    End If
-'
-'End Sub
+Private Sub chkClearImmediate_Click()
+
+    ClearImmediateOnStart = chkClearImmediate.Value
+    SaveSetting "fastbuild", "settings", "ClearImmediateOnStart", chkClearImmediate.Value
+
+    'If loaded And ClearImmediateOnStart = 1 Then
+    '    MsgBox "Change takes effect next time to start IDE"
+    'End If
+
+End Sub
 
 Private Sub chkShowPostBuildOutput_Click()
     ShowPostBuildOutput = chkShowPostBuildOutput.Value
@@ -443,6 +459,10 @@ Private Sub Form_Load()
 End Sub
 
 
+
+Private Sub lblClearStartHelp_Click()
+    MsgBox "For external Debug.Print window only, not built in immediate window, use the dedicated blue arrow toolbar button for now.", vbInformation
+End Sub
 
 Private Sub txtBuildPath_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single)
     On Error Resume Next

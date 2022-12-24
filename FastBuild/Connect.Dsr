@@ -39,6 +39,12 @@ Option Explicit
 'CommandBarButton class instead of CommandBarControl, and it had the .Picture
 'I dont believe that the .Picture property is available in 2000, only 2002 and 2003.
 
+
+'Elroy: https://www.vbforums.com/showthread.php?898658-Debug-Print-Redirect-(Add-In)
+Dim WithEvents moIDE As VBIDE.VBBuildEvents
+Attribute moIDE.VB_VarHelpID = -1
+
+
 Private FormDisplayed As Boolean
 Dim mfrmAddIn As frmAddIn
 
@@ -91,6 +97,22 @@ Attribute mnuOpenHomeDir.VB_VarHelpID = -1
 
 Dim mcbRealMakeMenu As Office.CommandBarControl
 
+Private Declare Function EbMode Lib "vba6" () As Long ' 0=Design, 1=Run, 2=Break.
+Private Declare Function GetWindowTextLengthW Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function GetWindowTextW Lib "user32" (ByVal hwnd As Long, ByVal lpString As Long, ByVal cch As Long) As Long
+Private Declare Function GetFocus Lib "user32" () As Long ' Retrieves the handle to the window that has the keyboard focus, if the window is attached to the calling thread's message queue.
+Private Declare Function SendInput Lib "user32" (ByVal nInputs As Long, pInputs As Any, ByVal cbSize As Long) As Long
+
+Private Type KeyboardInput
+    dwType As Long
+    wVK As Integer
+    wScan As Integer
+    dwFlags As Long
+    dwTime As Long
+    dwExtraInfo As Long
+    dwPadding As Currency
+End Type
+
 'vb6 ide bug..if you hold a reference to an existing button in an addin..it will disable the button
 'when you enter the run state as if it was owned by the addin..just use f5 or runstart button then..
 'maybe I can switch to using a hooklib to hook it at a lower level so this bug manifest. I have a 20yr habit of
@@ -132,12 +154,18 @@ Sub Show()
     
 End Sub
 
+Private Sub AddinInstance_OnAddInsUpdate(custom() As Variant)
+    'when first loads
+End Sub
+
 '------------------------------------------------------
 'this method adds the Add-In to VB
 '------------------------------------------------------
 Private Sub AddinInstance_OnConnection(ByVal Application As Object, ByVal ConnectMode As AddInDesignerObjects.ext_ConnectMode, ByVal AddInInst As Object, custom() As Variant)
     
     On Error Resume Next
+    
+    'once at startup
     
     'save the vb instance
     If VBInstance Is Nothing Then Set VBInstance = Application
@@ -392,11 +420,36 @@ hell:
     
 End Sub
 
+Private Sub AddinInstance_OnStartupComplete(custom() As Variant)
+    Dim iEvents2 As Events2
+    Set iEvents2 = VBInstance.Events
+    Set moIDE = iEvents2.VBBuildEvents
+End Sub
+
+'Elroy: https://www.vbforums.com/showthread.php?898658-Debug-Print-Redirect-(Add-In)
+Private Sub moIDE_EnterRunMode()
+    
+    If ClearImmediateOnStart Then
+        'not working when called from here...but does work on command button, returns true
+        'must be locked from input at this stage
+        'ClearImmediateWindow
+        If dbgIntercept.isActive Then dbgIntercept.debugPrint "<cls>"
+    End If
+    
+End Sub
+
 Private Sub FileEvents_AfterWriteFile(ByVal VBProject As VBIDE.VBProject, ByVal FileType As VBIDE.vbext_FileType, ByVal FileName As String, ByVal result As Integer)
     
     Dim postbuild As String
     Dim buildOutput As String
     Dim tmp As String, t2 As String
+    
+'    If FileType = vbext_ft_Project Then
+'        If ClearImmediateOnStart Then
+'            'ClearImmediateWindow 'not working when called from here...but does work on command button
+'            If dbgIntercept.isActive Then dbgIntercept.debugPrint "<cls>"
+'        End If
+'    End If
     
     If FileType <> vbext_ft_Exe Then Exit Sub
            
@@ -796,18 +849,122 @@ End Function
 
 Private Sub mnuImmediate_Click(ByVal CommandBarControl As Object, handled As Boolean, CancelDefault As Boolean)
     ClearImmediateWindow
+    If dbgIntercept.isActive Then dbgIntercept.debugPrint "<cls>"
     SendKeys "{F5}", True
 End Sub
 
-Sub ClearImmediateWindow()
-    On Error Resume Next
-    Dim oWindow As VBIDE.Window
-    Set oWindow = VBInstance.ActiveWindow
-    VBInstance.Windows("Immediate").SetFocus
-    SendKeys "^{Home}", True     'win10 permission denied
-    SendKeys "^+{End}", True
-    SendKeys "{Del}", True
-    oWindow.SetFocus
+'Sub ClearImmediateWindow()
+'    On Error Resume Next
+'    Dim oWindow As VBIDE.Window
+'    Set oWindow = VBInstance.ActiveWindow
+'    VBInstance.Windows("Immediate").SetFocus
+'    SendKeys "^{Home}", True     'win10 permission denied
+'    SendKeys "^+{End}", True
+'    SendKeys "{Del}", True
+'    oWindow.SetFocus
+'End Sub
+
+'Elroy: https://www.vbforums.com/showthread.php?897641-Clear-Immediate-Window&p=5579826
+Public Function ClearImmediateWindow() As Boolean
+     
+    Dim w As VBIDE.Window
+    Dim sTitle As String
+    
+    Set w = VBInstance.Windows("Immediate")
+
+    If w Is Nothing Then Exit Function
+    If Not w.Visible Then w.Visible = True
+    w.SetFocus
+    
+    sTitle = WindowText(GetFocus)
+    If sTitle <> "Immediate" Then
+        MsgBox "For some reason, the focus of the ""Immediate"" window couldn't be set, so this ""Clear"" operation can't be performed.  You may possibly be set to another language.", vbInformation
+        Exit Function
+    End If
+
+    SendKeysSpecial "^{HOME}"
+    SendKeysSpecial "^+{END}"
+    SendKeysSpecial "{DEL}"
+    
+    sTitle = WindowText(GetFocus)
+    If sTitle = "Immediate" Then 'if the window is locked from input by IDE, this will still be true..
+        ClearImmediateWindow = True
+    Else
+        'SendKeysSpecial "^Z"  'undo
+    End If
+    
+    
+    'MsgBox "imm clear messages sent! EbMode = " & EbMode, vbInformation
+    
+End Function
+
+Private Function WindowText(hWndOfInterest As Long) As String
+    WindowText = Space$(GetWindowTextLengthW(hWndOfInterest))
+    WindowText = Left$(WindowText, GetWindowTextW(hWndOfInterest, StrPtr(WindowText), Len(WindowText) + 1&))
+End Function
+
+Private Sub SendKeysSpecial(Data As String)
+    Dim KeyEvents()  As KeyboardInput
+    ReDim KeyEvents(15&)
+    Dim DatPtr As Long
+    Dim EvtPtr As Long
+    Do While DatPtr < Len(Data)
+        DoNextChr Data, DatPtr, EvtPtr, KeyEvents
+    Loop
+    '
+    SendInput EvtPtr, KeyEvents(0&), Len(KeyEvents(0&))
+End Sub
+
+Private Sub DoNextChr(Data As String, DatPtr As Long, EvtPtr As Long, KeyEvents() As KeyboardInput)
+    Const INPUT_KEYBOARD            As Long = 1&
+    Const KEYEVENTF_EXTENDEDKEY     As Long = 1&
+    Const KEYEVENTF_KEYUP           As Long = 2&
+    '
+    DatPtr = DatPtr + 1&
+    Dim this As String
+    this = Mid$(Data, DatPtr, 1&)
+    '
+    Select Case this
+    Case "+", "^"
+        Select Case this
+        Case "+":   KeyEvents(EvtPtr).wVK = vbKeyShift
+        Case "^":   KeyEvents(EvtPtr).wVK = vbKeyControl
+        End Select
+        KeyEvents(EvtPtr).dwType = INPUT_KEYBOARD
+        EvtPtr = EvtPtr + 1&
+        '
+        DoNextChr Data, DatPtr, EvtPtr, KeyEvents   ' Recursion.
+        '
+        Select Case this
+        Case "+":   KeyEvents(EvtPtr).wVK = vbKeyShift
+        Case "^":   KeyEvents(EvtPtr).wVK = vbKeyControl
+        End Select
+        KeyEvents(EvtPtr).dwFlags = KEYEVENTF_KEYUP
+        KeyEvents(EvtPtr).dwType = INPUT_KEYBOARD
+        EvtPtr = EvtPtr + 1&
+    Case "{"
+        Dim EndPtr As Long
+        EndPtr = InStr(DatPtr, Data, "}")
+        '
+        Dim vk As Integer
+        Select Case Mid$(Data, DatPtr + 1&, EndPtr - DatPtr - 1&)
+        Case "DEL":     vk = vbKeyDelete
+        Case "END":     vk = vbKeyEnd
+        Case "HOME":    vk = vbKeyHome
+        End Select
+        '
+        KeyEvents(EvtPtr).wVK = vk
+        KeyEvents(EvtPtr).dwFlags = KEYEVENTF_EXTENDEDKEY
+        KeyEvents(EvtPtr).dwType = INPUT_KEYBOARD
+        EvtPtr = EvtPtr + 1&
+        '
+        KeyEvents(EvtPtr).wVK = vk
+        KeyEvents(EvtPtr).dwFlags = KEYEVENTF_KEYUP
+        KeyEvents(EvtPtr).dwType = INPUT_KEYBOARD
+        EvtPtr = EvtPtr + 1&
+        '
+        DatPtr = EndPtr
+    End Select
 End Sub
 
 'doesnt work in win10? worked in XP
@@ -819,7 +976,8 @@ Sub SetImmediateText(text As String)
     
     If Len(text) = 0 Then Exit Sub
     
-    ClearImmediateWindow
+    If Not ClearImmediateWindow Then Exit Sub
+    
     'saved = Clipboard.GetText
     Clipboard.Clear
     Clipboard.SetText text
@@ -827,7 +985,7 @@ Sub SetImmediateText(text As String)
     
     Set oWindow = VBInstance.ActiveWindow
     VBInstance.Windows("Immediate").SetFocus
-    SendKeys "^v", False 'True
+    SendKeys "^v", False  'True  Paste
    
     's = Now apparently win10 has some timing issues..we cant restore the old clipboard not gonna fight with it..
     'While DateDiff("s", s, Now) < 2
@@ -836,6 +994,7 @@ Sub SetImmediateText(text As String)
     'Clipboard.Clear
     'If Len(saved) > 0 Then Clipboard.SetText saved
     'MsgBox text
+    
 End Sub
 
 
@@ -861,3 +1020,5 @@ Private Sub mnuOpenHomeDir_Click(ByVal CommandBarControl As Object, handled As B
     path = GetParentFolder(path)
     Shell "explorer " & path, vbNormalFocus
 End Sub
+
+
