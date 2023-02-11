@@ -235,7 +235,10 @@ Private Sub Form_Load()
             Me.Left = 0&
             Me.Top = 0&
         End If
-        '
+        
+        If Me.Width < 8000 Then Me.Width = 9000
+        If Me.Height < 6000 Then Me.Height = 6000
+        
         txt.FontName = GetSetting(App.Title, "Settings", "FontName", "Fixedsys")
         txt.FontBold = GetSetting(App.Title, "Settings", "FontBold", False)
         txt.FontItalic = GetSetting(App.Title, "Settings", "FontItalic", False)

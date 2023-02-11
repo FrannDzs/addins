@@ -212,15 +212,17 @@ Private Function StringMessage_Proc(ByVal hWnd As Long, ByVal uMsg As Long, ByVa
     Dim Buf() As Byte
     Dim sMsg As String
     Const WM_COPYDATA As Long = &H4A&
+    Dim lastNull As Long
     '
     If uMsg = WM_COPYDATA Then
         Call CopyMemory(cds, ByVal lParam, Len(cds))
         ReDim Buf(1& To cds.cbData)
         Call CopyMemory(Buf(1&), ByVal cds.lpData, cds.cbData)
         sMsg = StrConv(Buf, vbUnicode)
-        sMsg = Left$(sMsg, InStr(sMsg, vbNullChar) - 1&)
+        lastNull = InStr(sMsg, vbNullChar)
+        If lastNull > 0 Then sMsg = Left$(sMsg, InStr(sMsg, vbNullChar) - 1&)
         '
-        frmDebugPrint.Out sMsg  ' Out MUST be public, or we can't find it this way.
+        frmDebugPrint.out sMsg  ' Out MUST be public, or we can't find it this way.
     End If
     '
     ' Give control to other procs, if they exist.
