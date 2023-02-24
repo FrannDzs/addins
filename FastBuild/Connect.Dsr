@@ -438,6 +438,65 @@ Private Sub moIDE_EnterRunMode()
     
 End Sub
 
+'Public Property Get ActiveModule() As CodeModule
+'    On Error Resume Next
+'    Dim ActivePane
+'    Set ActivePane = VBInstance.ActiveCodePane
+'    Set ActiveModule = ActivePane.CodeModule
+'End Property
+'
+''We didn't figure out how to use Parent.ReadProperty, so here is cycle through all properties
+'Private Function ModuleProp(ByVal PropName As String) As String
+'    Dim Prop As VBIDE.Property, i As Long
+'    On Error GoTo errHandler
+'    For i = 1 To ActiveModule.Parent.Properties.count
+'        Set Prop = ActiveModule.Parent.Properties(i)
+'        'If Prop.name = PropName Then
+'        '    ModuleProp = Prop.Value
+'        '    Exit Function
+'        'End If
+'        Debug.Print Prop.Value
+'    Next i
+'    Exit Function
+'errHandler:
+'    Debug.Print "ModuleProp(PropName)", PropName
+'End Function
+
+Private Function hashFile(path) As String
+    Dim hash As Object 'New CWinHash
+    Const CALG_SHA_256 As Long = &H800C& 'trailing & required
+    Const CALG_SHA_512 As Long = &H800E&
+
+    On Error Resume Next
+    
+    If FileExists(path) Then
+        Set hash = CreateObject("vbdevkit.CWinHash")
+        If Not hash Is Nothing Then
+            hashFile = hash.hashFile(CStr(path), CALG_SHA_256, 0)
+        End If
+    End If
+    
+End Function
+
+Private Function GenerateVerFile(exe)
+    
+    On Error Resume Next
+    Dim v() As String, path As String
+    
+    If Not FileExists(exe) Then Exit Function
+    
+    path = GetVersionFilePath()
+    If Len(path) = 0 Then Exit Function
+    
+    push v, GetFileVersion(exe)
+    push v, Now
+    push v, FileNameFromPath(exe) & ": " & hashFile(exe)
+    
+    path = GetParentFolder(exe) & "\" & path
+    WriteFile path, Join(v, vbCrLf)
+    
+End Function
+
 Private Sub FileEvents_AfterWriteFile(ByVal VBProject As VBIDE.VBProject, ByVal FileType As VBIDE.vbext_FileType, ByVal FileName As String, ByVal result As Integer)
     
     Dim postbuild As String
@@ -452,7 +511,7 @@ Private Sub FileEvents_AfterWriteFile(ByVal VBProject As VBIDE.VBProject, ByVal 
 '    End If
     
     If FileType <> vbext_ft_Exe Then Exit Sub
-           
+
     If Not isBuildPathSet() Then
         tmp = GetParentFolder(VBInstance.ActiveVBProject.FileName)
         t2 = GetParentFolder(FileName)
@@ -464,6 +523,8 @@ Private Sub FileEvents_AfterWriteFile(ByVal VBProject As VBIDE.VBProject, ByVal 
         End If
         VBInstance.ActiveVBProject.WriteProperty "fastBuild", "fullPath", tmp
     End If
+    
+    If doVerFileGen() Then GenerateVerFile (FileName)
     
     LastCommandOutput = Empty
     postbuild = GetPostBuildCommand()
@@ -878,7 +939,7 @@ Public Function ClearImmediateWindow() As Boolean
     
     sTitle = WindowText(GetFocus)
     If sTitle <> "Immediate" Then
-        MsgBox "For some reason, the focus of the ""Immediate"" window couldn't be set, so this ""Clear"" operation can't be performed.  You may possibly be set to another language.", vbInformation
+        'MsgBox "For some reason, the focus of the ""Immediate"" window couldn't be set, so this ""Clear"" operation can't be performed.  You may possibly be set to another language.", vbInformation
         Exit Function
     End If
 

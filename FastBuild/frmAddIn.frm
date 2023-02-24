@@ -13,6 +13,29 @@ Begin VB.Form frmAddIn
    ScaleHeight     =   5310
    ScaleWidth      =   12135
    StartUpPosition =   2  'CenterScreen
+   Begin VB.CommandButton cmdSaveGenPath 
+      Caption         =   "Save"
+      Height          =   315
+      Left            =   5880
+      TabIndex        =   25
+      Top             =   1320
+      Width           =   975
+   End
+   Begin VB.TextBox txtVerFile 
+      Height          =   285
+      Left            =   2400
+      TabIndex        =   24
+      Top             =   1320
+      Width           =   3195
+   End
+   Begin VB.CheckBox chkGenVerFile 
+      Caption         =   "Generate Version File name:"
+      Height          =   255
+      Left            =   60
+      TabIndex        =   23
+      Top             =   1320
+      Width           =   2295
+   End
    Begin VB.CheckBox chkRedirDbgPrint 
       Caption         =   "Redir Debug.Print"
       Height          =   255
@@ -90,17 +113,17 @@ Begin VB.Form frmAddIn
    Begin VB.CommandButton Command2 
       Caption         =   "Last CMD Output"
       Height          =   285
-      Left            =   2400
+      Left            =   7200
       TabIndex        =   13
-      Top             =   1320
+      Top             =   1380
       Width           =   1590
    End
    Begin VB.CommandButton cmdTest 
       Caption         =   "Test"
       Height          =   285
-      Left            =   4080
+      Left            =   8880
       TabIndex        =   12
-      Top             =   1320
+      Top             =   1380
       Width           =   1095
    End
    Begin VB.CommandButton Command1 
@@ -326,6 +349,11 @@ Private Sub chkConsoleApp_Click()
     VBInstance.ActiveVBProject.WriteProperty "fastBuild", "IsConsoleApp", chkConsoleApp.Value
 End Sub
 
+Private Sub chkGenVerFile_Click()
+    On Error Resume Next
+    VBInstance.ActiveVBProject.WriteProperty "fastBuild", "GenVerFile", chkGenVerFile.Value
+End Sub
+
 Private Sub chkDisplayAsHex_Click()
         
     If Not loaded Then Exit Sub
@@ -371,6 +399,11 @@ End Sub
 Private Sub cmdSaveExec_Click()
     On Error Resume Next
     VBInstance.ActiveVBProject.WriteProperty "fastBuild", "ExecBtnCmdLine", Trim(txtExecute)
+End Sub
+
+Private Sub cmdSaveGenPath_Click()
+    On Error Resume Next
+    VBInstance.ActiveVBProject.WriteProperty "fastBuild", "VersionFile", txtVerFile.text
 End Sub
 
 Private Sub cmdTest_Click()
@@ -432,6 +465,8 @@ Private Sub Form_Load()
         
     txtExecute = VBInstance.ActiveVBProject.ReadProperty("fastBuild", "ExecBtnCmdLine")
     chkConsoleApp.Value = CInt(VBInstance.ActiveVBProject.ReadProperty("fastBuild", "IsConsoleApp"))
+    chkGenVerFile.Value = CInt(VBInstance.ActiveVBProject.ReadProperty("fastBuild", "GenVerFile"))
+    txtVerFile.text = GetVersionFilePath()
     
     chkClearImmediate.Value = ClearImmediateOnStart
     chkShowPostBuildOutput.Value = ShowPostBuildOutput
