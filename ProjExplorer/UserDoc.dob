@@ -1,0 +1,615 @@
+VERSION 5.00
+Begin VB.UserDocument UserDoc 
+   Appearance      =   0  'Flat
+   BackColor       =   &H80000016&
+   ClientHeight    =   11475
+   ClientLeft      =   0
+   ClientTop       =   0
+   ClientWidth     =   3150
+   ContinuousScroll=   0   'False
+   HScrollSmallChange=   15
+   ScaleHeight     =   765
+   ScaleMode       =   3  'Pixel
+   ScaleWidth      =   210
+   ScrollBars      =   0  'None
+   VScrollSmallChange=   15
+   Begin VB.ComboBox cmbProject 
+      Appearance      =   0  'Flat
+      BeginProperty Font 
+         Name            =   "Tahoma"
+         Size            =   9
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      ForeColor       =   &H00000000&
+      Height          =   330
+      Left            =   240
+      Sorted          =   -1  'True
+      Style           =   2  'Dropdown List
+      TabIndex        =   1
+      Top             =   120
+      Width           =   2775
+   End
+   Begin ProjEx.ucProjectExplorer ucProjEx 
+      Height          =   8415
+      Left            =   360
+      TabIndex        =   0
+      Top             =   1560
+      Width           =   2055
+      _ExtentX        =   3625
+      _ExtentY        =   14843
+   End
+   Begin VB.Menu mnuOptions 
+      Caption         =   "Options"
+      Visible         =   0   'False
+      Begin VB.Menu mnuOpenCodePane 
+         Caption         =   "View Code"
+      End
+      Begin VB.Menu mnuOpenDesigner 
+         Caption         =   "View Object"
+      End
+      Begin VB.Menu mnuSep3 
+         Caption         =   "-"
+      End
+      Begin VB.Menu mnuProperties 
+         Caption         =   "Properties"
+      End
+      Begin VB.Menu mnuNewGroup 
+         Caption         =   "New Group"
+      End
+      Begin VB.Menu mnuRenameGroup 
+         Caption         =   "Rename Group"
+      End
+      Begin VB.Menu mnuDeleteGroup 
+         Caption         =   "Delete Group"
+      End
+      Begin VB.Menu mnuSep1 
+         Caption         =   "-"
+      End
+      Begin VB.Menu mnuSave 
+         Caption         =   "Save"
+      End
+      Begin VB.Menu mnuRemoveFromProject 
+         Caption         =   "Remove from Project"
+      End
+      Begin VB.Menu mnuRemoveFromGroup 
+         Caption         =   "Remove From Group"
+      End
+      Begin VB.Menu mnuSort 
+         Caption         =   "Sort Groups"
+      End
+      Begin VB.Menu mnuSep2 
+         Caption         =   "-"
+      End
+      Begin VB.Menu mnuExpand 
+         Caption         =   "Expand All"
+      End
+      Begin VB.Menu mnuCollapse 
+         Caption         =   "Collapse All"
+      End
+   End
+End
+Attribute VB_Name = "UserDoc"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = True
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = True
+Option Explicit
+
+Private Declare Function FindWindowEx Lib "user32" Alias "FindWindowExA" (ByVal hWnd1 As Long, ByVal hWnd2 As Long, ByVal lpsz1 As String, ByVal lpsz2 As String) As Long
+
+Private Declare Function SendMessageA Lib "user32" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByRef lParam As Any) As Long
+
+Private Declare Function SendMessage Lib "user32.dll" Alias "SendMessageA" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByRef lParam As Any) As Long
+Private Const TV_FIRST As Long = &H1100
+Private Const TVM_SELECTITEM As Long = (TV_FIRST + 11)
+Private Const TVM_GETNEXTITEM As Long = (TV_FIRST + 10)
+Private Const TVGN_ROOT As Long = &H0
+Private Const TVGN_CHILD As Long = &H4
+Private Const TVGN_NEXT As Long = &H1
+Private Const TVGN_CARET As Long = &H9
+Private Const TVM_GETITEM   As Long = &H110C&
+Private Const TVIF_TEXT = &H1
+Private Const TVIF_PARAM = &H4
+Private Const TVIF_CHILDREN = &H40
+
+Private Type TVITEM
+   mask As Long
+   hItem As Long
+   state As Long
+   stateMask As Long
+   pszText As Long
+   cchTextMax As Long
+   iImage As Long
+   iSelectedImage As Long
+   cChildren As Long
+   lParam As Long
+End Type
+
+'Private Declare Function GetModuleFileNameW Lib "kernel32" (ByVal hModule As Long, ByVal lpFileName As Long, ByVal nSize As Long) As Long
+Private Declare Function SetFileAttributesW Lib "kernel32" (ByVal lpFileName As Long, ByVal dwFileAttributes As VbFileAttribute) As Long
+Private Declare Function DeleteFileW Lib "kernel32" (ByVal lpFileName As Long) As Long
+Private Declare Function ExtractIconEx Lib "shell32" Alias "ExtractIconExW" (ByVal lpszFile As Long, ByVal nIconIndex As Long, ByVal phiconLarge As Long, ByVal phiconSmall As Long, ByVal nIcons As Long) As Long
+Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hWnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+  
+Private WithEvents mFileEvents As FileControlEvents
+Attribute mFileEvents.VB_VarHelpID = -1
+Private WithEvents mProjectEvents As VBProjectsEvents
+Attribute mProjectEvents.VB_VarHelpID = -1
+Private WithEvents mComponentEvents As VBComponentsEvents
+Attribute mComponentEvents.VB_VarHelpID = -1
+
+Private mTypeIcons() As Long
+Private mMouseItem As String, mMouseGroup As String, mMenuComponent As VBComponent, mMenuFilepath As String
+Private mProjectTreeHwnd As Long
+Private mPropertiesWindow As VBIDE.Window
+Private mProjectLoading As Boolean
+Private mRoleCall As Collection
+Public Sub Init()
+Dim thisProj As VBProject, thisWindow As VBIDE.Window, hWnd As Long
+   
+   hWnd = FindWindowEx(gVBInstance.MainWindow.hWnd, 0, "PROJECT", vbNullString)
+   mProjectTreeHwnd = FindWindowEx(hWnd, 0, "SysTreeView32", vbNullString)
+   For Each thisWindow In gVBInstance.Windows
+      If thisWindow.Type = vbext_wt_PropertyWindow Then
+         Set mPropertiesWindow = thisWindow
+         Exit For
+      End If
+   Next thisWindow
+
+   Set mFileEvents = gVBInstance.Events.FileControlEvents(Nothing)
+   Set mComponentEvents = gVBInstance.Events.VBComponentsEvents(Nothing)
+   Set mProjectEvents = gVBInstance.Events.VBProjectsEvents
+   ucProjEx.Clear
+   InitTypeIcons
+   UserDocument_Resize
+   For Each thisProj In gVBInstance.VBProjects
+      InitProject thisProj
+   Next thisProj
+End Sub
+Private Sub InitProject(Project As VBProject)
+   Set mRoleCall = New Collection 'used to check the integrity of the pex data...
+   If Len(Project.FileName) Then LoadPexData Project
+   ProcessComponents Project
+   ucProjEx.Init
+   Set mRoleCall = Nothing '...and not needed again (until we open another project)
+   RefreshProjectList vbNullString
+End Sub
+Private Sub cmbProject_Click()
+Dim i As Long, j As Long, Group As String, Items As Collection, s() As String
+   ucProjEx.UnHideAll True
+   If cmbProject.ListIndex > 0 Then
+      For i = 1 To ucProjEx.Groups.Count
+         Group = ucProjEx.Groups(i).Key
+         For j = ucProjEx.ItemCount(Group) To 1 Step -1
+            Set Items = ucProjEx.GroupItems(Group)
+            s = Split(Items(j).Key, "|")
+            If s(1) <> cmbProject.Text Then
+               ucProjEx.HideItem Items(j).Key, True
+            End If
+         Next j
+      Next i
+   End If
+   ucProjEx.Init
+End Sub
+
+'===============================
+'Relevant Project events
+Private Sub mComponentEvents_ItemAdded(ByVal VBComponent As VBIDE.VBComponent)
+   If mProjectLoading Then Exit Sub 'we'll process all the components when the project has finished loading
+   AddNewItem vbNullString, KeyForComponent(VBComponent), CaptionForComponent(VBComponent), VBComponent.Type, True, False
+End Sub
+Private Sub mComponentEvents_ItemRemoved(ByVal VBComponent As VBIDE.VBComponent)
+   ucProjEx.RemoveItem KeyForComponent(VBComponent), , True
+   ucProjEx.Init
+End Sub
+Private Sub mComponentEvents_ItemRenamed(ByVal VBComponent As VBIDE.VBComponent, ByVal OldName As String)
+Dim i As Long, Group As clsGroup, Item As clsItem, OldItemKey As String, NewItemKey As String
+   
+   OldItemKey = OldName & "|" & VBComponent.Collection.Parent.Name
+   NewItemKey = KeyForComponent(VBComponent)
+   
+   For Each Group In ucProjEx.Groups
+      Set Item = ucProjEx.GroupItem(Group.Key, OldItemKey)
+      If Not Item Is Nothing Then
+         ucProjEx.RemoveItem OldItemKey, Group.Key, True
+         ucProjEx.AddGroupItem Group.Key, NewItemKey, VBComponent.Name, Item.ItemType, Item.IconHandle, , True
+      End If
+   Next Group
+   ucProjEx.Init
+   
+End Sub
+Private Sub mComponentEvents_ItemSelected(ByVal VBComponent As VBIDE.VBComponent)
+Dim i As Long
+   If mProjectLoading Then Exit Sub
+   
+   If Not (cmbProject.ListIndex = 0 Or VBComponent.Collection.Parent.Name = cmbProject.Text) Then
+      For i = 1 To cmbProject.ListCount - 1
+         If cmbProject.List(i) = VBComponent.Collection.Parent.Name Then
+            cmbProject.ListIndex = i
+            Exit For
+         End If
+      Next i
+   End If
+   ucProjEx.SelectItem KeyForComponent(VBComponent), True
+End Sub
+Private Sub mFileEvents_AfterAddFile(ByVal VBProject As VBIDE.VBProject, ByVal FileType As VBIDE.vbext_FileType, ByVal FileName As String)
+'
+End Sub
+Private Sub mFileEvents_AfterWriteFile(ByVal VBProject As VBIDE.VBProject, ByVal FileType As VBIDE.vbext_FileType, ByVal FileName As String, ByVal Result As Integer)
+   If LCase$(Right$(FileName, 4)) = ".vbp" Then WritePexFile VBProject
+End Sub
+Private Sub mFileEvents_BeforeLoadFile(ByVal VBProject As VBIDE.VBProject, FileNames() As String) 'this marks the beginning of a project loading...
+   If LCase$(Right$(FileNames(0), 4)) = ".vbp" Then mProjectLoading = True
+End Sub
+'(there'll be lots of mComponentEvents_ItemAdded events between these two, but we're supressing them via our mProjectLoading flag)
+Private Sub mProjectEvents_ItemAdded(ByVal VBProject As VBIDE.VBProject) '... and this marks the end of a project loading
+   mProjectLoading = False
+   If Len(VBProject.FileName) Then InitProject VBProject ' If len=0 it's not a saved project & we'll catch the component-add events
+   RefreshProjectList vbNullString
+End Sub
+Private Sub mProjectEvents_ItemRemoved(ByVal VBProject As VBIDE.VBProject)
+Dim Group As clsGroup, Item As clsItem, s() As String
+   
+   If VBProject.Name = vbNullString Then
+      mProjectLoading = False 'a project without a name that is removed is one that failed to load
+   Else
+      'If Len(VBProject.FileName) Then WritePexFile VBProject
+      
+      For Each Group In ucProjEx.Groups
+         For Each Item In Group.Items
+            s = Split(Item.Key, "|")
+            If s(1) = VBProject.Name Then
+               ucProjEx.RemoveItem Item.Key, Group.Key, True
+            End If
+         Next Item
+      Next Group
+   End If
+   
+   If gVBInstance.VBProjects.Count = 1 Then ucProjEx.Clear Else ucProjEx.Init
+   RefreshProjectList VBProject.Name
+End Sub
+Private Sub ucProjEx_DoubleClick(ByVal ItemKey As String)
+   ComponentFromItemKey(ItemKey, mMenuFilepath).Activate
+End Sub
+Private Sub RefreshProjectList(ExceptProject As String)
+Dim Proj As VBProject
+   cmbProject.Clear
+   If gVBInstance.VBProjects.Count > 1 Then cmbProject.AddItem "All in Project Group"
+   For Each Proj In gVBInstance.VBProjects
+      If Proj.Name <> ExceptProject Then cmbProject.AddItem Proj.Name
+   Next Proj
+   If cmbProject.ListCount > 0 Then cmbProject.ListIndex = 0
+End Sub
+Private Sub ProcessComponents(Project As VBProject)
+Dim Comp As VBComponent, CompKey As String, s() As String
+   For Each Comp In Project.VBComponents
+      CompKey = KeyForComponent(Comp)
+      If Not Exists(mRoleCall, CompKey) Then
+         'we have something that isn't in the Pex file. Should only happen the first time we 'see' a project, i.e. we don't yet have a pex file
+         AddNewItem vbNullString, CompKey, CaptionForComponent(Comp), Comp.Type, True, True
+      Else
+         mRoleCall.Remove CompKey 'was in the pex file - should always be the case
+      End If
+   Next Comp
+   If mRoleCall.Count > 0 Then PurgeRedundantItems 'anything left in mRoleCall is in the pex file but not the project (shouldn't happen)...
+End Sub
+Private Sub PurgeRedundantItems() '...but we'll handle it, if it does
+Dim i As Long
+   For i = 1 To mRoleCall.Count
+      ucProjEx.RemoveItem mRoleCall(i), , True
+   Next i
+End Sub
+Private Sub AddNewItem(Group As String, ComponentKey As String, ComponentName As String, ComponentType As Long, Expanded As Boolean, Optional ByVal Silent As Boolean)
+Dim hIcon As Long
+   If ComponentType = 4 Or ComponentType = 10 Then
+      hIcon = GetAssocIconHandle(Right$(ComponentName, 4))
+   Else
+      hIcon = mTypeIcons(ComponentType)
+   End If
+   If Len(Group) = 0 Then Group = DefaultGroupForType(ComponentType)
+   ucProjEx.AddGroupItem Group, ComponentKey, ComponentName, ComponentType, hIcon, Expanded, Silent
+End Sub
+'===============================
+'helpers
+Private Function Exists(pCollection As Collection, ByVal Key As Variant) As Boolean
+   On Error Resume Next
+   IsObject pCollection.Item(Key)
+   Exists = Err.Number = 0
+End Function
+Private Sub SelectComponent(ProjectName As String, ComponentName As String, Optional hItem As Long, Optional Tier As Long)
+Dim tvi As TVITEM, hItemChild As Long, szText As String, s() As String
+ 
+   Tier = Tier + 1
+   If hItem = 0 Then hItem = SendMessage(mProjectTreeHwnd, TVM_GETNEXTITEM, TVGN_ROOT, ByVal 0&)
+    
+   Do While Not hItem = 0
+      szText = String(64, vbNullChar)
+      tvi.hItem = hItem
+      tvi.mask = TVIF_CHILDREN Or TVIF_TEXT 'Or TVIF_PARAM
+      tvi.pszText = StrPtr(szText)
+      tvi.cchTextMax = Len(szText)
+      
+      SendMessage mProjectTreeHwnd, TVM_GETITEM, 0, tvi
+      
+      szText = StrConv(szText, vbUnicode)
+      szText = Left$(szText, InStr(1, szText, vbNullChar) - 1)
+      s = Split(szText, " (")
+      
+      If Tier = 1 Then
+'         If s(0) <> ProjectName Then Exit Sub
+      Else
+         If s(0) = ComponentName Then
+            SendMessage mProjectTreeHwnd, TVM_SELECTITEM, TVGN_CARET, ByVal hItem
+            Exit Sub
+         End If
+      End If
+      
+      If (tvi.cChildren) Then
+         hItemChild = SendMessage(mProjectTreeHwnd, TVM_GETNEXTITEM, TVGN_CHILD, ByVal hItem)
+         SelectComponent ProjectName, ComponentName, hItemChild, Tier
+      End If
+      hItem = SendMessage(mProjectTreeHwnd, TVM_GETNEXTITEM, TVGN_NEXT, ByVal hItem)
+   Loop
+    
+End Sub
+Private Function KeyForComponent(Comp As VBComponent) As String
+   If Len(Comp.Name) Then
+      KeyForComponent = Comp.Name & "|" & Comp.Collection.Parent.Name
+   Else 'e.g. RES files and other 'related documents'
+      KeyForComponent = Comp.FileNames(1) & "|" & Comp.Collection.Parent.Name
+   End If
+End Function
+Private Function CaptionForComponent(Comp As VBComponent) As String
+Dim s() As String
+   If Len(Comp.Name) Then
+      CaptionForComponent = Comp.Name
+   Else 'e.g. RES files and other 'related documents'
+      s = Split(Comp.FileNames(1), "\")
+      CaptionForComponent = s(UBound(s))
+   End If
+End Function
+Private Function DefaultGroupForType(ComponentType As Long) As String
+   DefaultGroupForType = Choose(ComponentType, "Modules", "Classes", "Forms", "Other", "Forms", "Forms", "Other", "User Controls", "Other", "Other", "Other")
+End Function
+Private Function ComponentFromItemKey(ByVal ItemKey As String, ByRef FilePath_OUT As String) As VBComponent
+Dim s() As String, VBProject As VBProject, i As Long, thisComponent As VBComponent
+   s = Split(ItemKey, "|")
+   Set VBProject = gVBInstance.VBProjects(s(1))
+   If InStr(s(0), "\") Then
+      For Each thisComponent In VBProject.VBComponents
+         If thisComponent.Name = vbNullString Then
+            If ItemKey = thisComponent.FileNames(1) & "|" & VBProject.Name Then Exit For
+         End If
+      Next thisComponent
+      Set ComponentFromItemKey = thisComponent
+      FilePath_OUT = s(0)
+   Else
+      Set ComponentFromItemKey = VBProject.VBComponents(s(0))
+      FilePath_OUT = ComponentFromItemKey.FileNames(1)
+   End If
+End Function
+Private Sub InitTypeIcons()
+Dim hIcon As Long, Index As Long, VBCompType As Long ', s As String
+   ReDim mTypeIcons(1 To 11)
+   's = GetEXEName
+   For VBCompType = 1 To 11
+      Index = Choose(VBCompType, 8, 9, 1, 0, 1, 1, 6, 5, 7, 0, 4)
+      ExtractIconEx StrPtr(gVBInstance.FullName), Index, 0, VarPtr(hIcon), 1
+      mTypeIcons(VBCompType) = hIcon
+   Next VBCompType
+End Sub
+'Private Function GetEXEName() As String
+'Const MAX_PATH = 260&
+    'GetEXEName = Space$(MAX_PATH - 1&)
+    'GetEXEName = Left$(GetEXEName, GetModuleFileNameW(0&, StrPtr(GetEXEName), MAX_PATH))
+'End Function
+'===============================
+'Pex file maintenance
+Private Sub LoadPexData(Project As VBProject)
+Dim FilePath As String, FileNo As Integer, sLine As String, s() As String, sGroup As String, Expand As Boolean, sCaption As String, sKey As String, CompType As Long
+   
+   FilePath = Replace(Project.FileName & "|", ".vbp|", ".pex", , , vbTextCompare)
+   
+   If Dir(FilePath) = vbNullString Then Exit Sub
+   
+   FileNo = FreeFile
+   Open FilePath For Input As #FileNo
+      Do While Not EOF(FileNo)
+         Line Input #FileNo, sLine
+         If Left(sLine, 1) = "[" Then
+            s = Split(sLine, "=")
+            sGroup = Replace(s(0), "[", vbNullString)
+            sGroup = Replace(sGroup, "]", vbNullString)
+            s = Split(sLine, "=")
+            If UBound(s) = 1 Then Expand = s(1) = "1"
+         Else
+            s = Split(sLine, "=")
+            sKey = s(0) & "|" & Project.Name
+            CompType = CLng(s(1))
+            If InStr(sKey, "\") Then
+               s = Split(s(0), "\")
+               sCaption = s(UBound(s))
+            Else
+               sCaption = s(0)
+            End If
+            If Not Exists(mRoleCall, sKey) Then mRoleCall.Add sKey, sKey
+            AddNewItem sGroup, sKey, sCaption, CompType, Expand, True
+         End If
+      Loop
+   Close #FileNo
+End Sub
+Private Sub WritePexFile(Project As VBProject)
+Dim FilePath As String, FileNo As Integer, s() As String, thisGroup As clsGroup, thisItem As clsItem
+   
+   FilePath = Replace(Project.FileName & "|", ".vbp|", ".pex", , , vbTextCompare)
+   
+   SetFileAttributesW StrPtr(FilePath), vbNormal
+   DeleteFileW (StrPtr(FilePath))
+   
+   FileNo = FreeFile
+   
+   Open FilePath For Output As #FileNo
+      For Each thisGroup In ucProjEx.Groups
+         Print #FileNo, "[" & thisGroup.Key & "]=" & IIf(thisGroup.Expanded, 1, 0)
+         For Each thisItem In thisGroup.Items
+            s = Split(thisItem.Key, "|")
+            If s(1) = Project.Name Then
+               If thisItem.ItemType = 4 Or thisItem.ItemType = 10 Then
+                  s = Split(thisItem.Key, "|")
+                  Print #FileNo, s(0) & "=" & thisItem.ItemType
+               Else
+                  Print #FileNo, thisItem.Caption & "=" & thisItem.ItemType
+               End If
+            End If
+         Next thisItem
+      Next thisGroup
+   Close #FileNo
+   
+   SetFileAttributesW StrPtr(FilePath), vbReadOnly
+   
+End Sub
+Private Sub UserDocument_Hide()
+   FormDisplayed = False
+End Sub
+Private Sub UserDocument_Resize()
+   'On Error Resume Next
+   cmbProject.Move 2, 2, UserDocument.ScaleWidth
+   ucProjEx.Move 0, 24, UserDocument.ScaleWidth, UserDocument.ScaleHeight - 24
+End Sub
+Private Sub UserDocument_Terminate()
+   Erase mTypeIcons
+   Set mPropertiesWindow = Nothing
+   Set mFileEvents = Nothing
+   Set mProjectEvents = Nothing
+   Set mComponentEvents = Nothing
+End Sub
+
+'==================================
+'Menu Stuff
+Private Sub ucProjEx_MouseDown(ByVal Button As MouseButtonConstants, ByVal X As Single, ByVal Y As Single, ByVal GroupKey As String, ByVal ItemKey As String, ByVal IsHeader As Boolean)
+Dim ItemOptionsAvailable As Boolean, s() As String
+   
+   ItemOptionsAvailable = Len(ItemKey) > 0 And Not IsHeader 'not a header or 'dead' space
+   
+   If ItemOptionsAvailable Then
+      s = Split(ItemKey, "|")
+      SelectComponent s(1), s(0)
+   End If
+   
+   If Button = vbRightButton Then
+     
+      mMouseItem = ItemKey: mMouseGroup = GroupKey
+      mnuOpenDesigner.Visible = ItemOptionsAvailable
+      If ItemOptionsAvailable Then
+          Set mMenuComponent = ComponentFromItemKey(ItemKey, mMenuFilepath)
+          mnuOpenDesigner.Enabled = InStr("|3|5|6|7|8|9|11|", "|" & ucProjEx.GroupItem(mMouseGroup, mMouseItem).ItemType & "|")
+          If Len(mMenuComponent.FileNames(1)) Then
+             s = Split(mMenuComponent.FileNames(1), "\")
+             mnuSave.Caption = "Save '" & s(UBound(s)) & "'"
+          Else
+             mnuSave.Caption = "Save '" & mMenuComponent.Name & "'"
+          End If
+          mnuOpenCodePane.Caption = IIf(Len(mMenuComponent.Name), "View Code", "Open in Default Application")
+      Else
+         mnuOpenDesigner.Enabled = False
+      End If
+      mnuSep3.Visible = ItemOptionsAvailable
+      mnuProperties.Visible = ItemOptionsAvailable
+      mnuSave.Visible = ItemOptionsAvailable
+      mnuRemoveFromGroup.Visible = ItemOptionsAvailable
+      mnuRemoveFromGroup.Caption = "Remove from '" & mMouseGroup & "'"
+      mnuRemoveFromProject.Visible = ItemOptionsAvailable
+      mnuOpenCodePane.Visible = ItemOptionsAvailable
+      mnuNewGroup.Visible = Not ItemOptionsAvailable
+      mnuRenameGroup.Visible = Not ItemOptionsAvailable
+      mnuRenameGroup.Enabled = Len(mMouseGroup)
+      mnuDeleteGroup.Visible = Not ItemOptionsAvailable
+      mnuDeleteGroup.Enabled = Len(mMouseGroup)
+      mnuSort.Visible = Not ItemOptionsAvailable
+      mnuSep2.Visible = Not ItemOptionsAvailable
+      mnuExpand.Visible = Not ItemOptionsAvailable
+      mnuCollapse.Visible = Not ItemOptionsAvailable
+      
+      PopupMenu mnuOptions, , X, Y + ucProjEx.Top
+      
+      Set mMenuComponent = Nothing
+   End If
+End Sub
+Private Sub mnuNewGroup_Click()
+Dim GroupName As String
+   GroupName = frmNewGroup.ShowEx
+   If Len(GroupName) Then ucProjEx.AddGroup GroupName
+End Sub
+Private Sub mnuRenameGroup_Click()
+Dim AmendedGroupName As String, Group As clsGroup
+   AmendedGroupName = frmNewGroup.ShowEx(mMouseGroup)
+   If Len(AmendedGroupName) Then
+      Set Group = ucProjEx.Groups(mMouseGroup)
+      Group.Key = AmendedGroupName
+      ucProjEx.Groups.Add Group, AmendedGroupName, mMouseGroup
+      ucProjEx.Groups.Remove mMouseGroup
+      ucProjEx.Init
+   End If
+End Sub
+Private Sub mnuDeleteGroup_Click()
+Dim thisItem As clsItem
+   For Each thisItem In ucProjEx.GroupItems(mMouseGroup)
+      If ucProjEx.ItemPresenceCount(thisItem.Key) > 1 Then
+         ucProjEx.RemoveItem thisItem.Key, mMouseGroup, True
+      Else
+         ucProjEx.MoveItem thisItem.Key, mMouseGroup, "Orphans", True
+      End If
+   Next thisItem
+   If ucProjEx.ItemCount(mMouseGroup) = 0 Then ucProjEx.RemoveGroup mMouseGroup
+   ucProjEx.Init
+End Sub
+Private Sub mnuSave_Click()
+On Error GoTo ErrHandler
+   mMenuComponent.SaveAs mMenuComponent.FileNames(1)
+   Exit Sub
+ErrHandler:
+   MsgBox Err.Number & " - " & Err.Description, vbExclamation, "Failed to save"
+End Sub
+Private Sub mnuRemoveFromProject_Click()
+   mMenuComponent.Collection.Parent.VBComponents.Remove mMenuComponent
+End Sub
+Private Sub mnuRemoveFromGroup_Click()
+   On Error GoTo ErrHandler:
+   If ucProjEx.ItemPresenceCount(mMouseItem) > 1 Then
+      ucProjEx.RemoveItem mMouseItem, mMouseGroup
+   Else
+      ucProjEx.MoveItem mMouseItem, mMouseGroup, "Orphans"
+   End If
+   Exit Sub
+ErrHandler:
+   If Err.Number = -2147220904 Then ucProjEx.RemoveItem mMouseItem, mMouseGroup
+End Sub
+Private Sub mnuSort_Click()
+   ucProjEx.Sort
+End Sub
+Private Sub mnuOpenCodePane_Click()
+   On Error Resume Next
+   If Len(mMenuComponent.Name) Then
+      mMenuComponent.CodeModule.CodePane.Show
+   Else
+      ShellExecute UserDocument.hWnd, "open", mMenuFilepath, vbNullString, vbNullString, 1
+   End If
+End Sub
+Private Sub mnuProperties_Click()
+   mPropertiesWindow.Visible = True
+End Sub
+Private Sub mnuOpenDesigner_Click()
+   On Error Resume Next
+   mMenuComponent.DesignerWindow.Visible = True
+End Sub
+Private Sub mnuCollapse_Click()
+   ucProjEx.CollapseAll
+End Sub
+Private Sub mnuExpand_Click()
+   ucProjEx.ExpandAll
+End Sub
+
