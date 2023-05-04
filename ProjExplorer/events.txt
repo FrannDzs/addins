@@ -1,0 +1,18 @@
+
+Private WithEvents mFileEvents As FileControlEvents
+Private WithEvents mProjectEvents As VBProjectsEvents
+Private WithEvents mComponentEvents As VBComponentsEvents
+
+Set mFileEvents = gVBInstance.Events.FileControlEvents(Nothing)
+Set mComponentEvents = gVBInstance.Events.VBComponentsEvents(Nothing)
+Set mProjectEvents = gVBInstance.Events.VBProjectsEvents
+ 
+Private Sub mProjectEvents_ItemAdded(ByVal VBProject As VBIDE.VBProject) '... and this marks the end of a project loading
+Private Sub mProjectEvents_ItemRemoved(ByVal VBProject As VBIDE.VBProject)
+Private Sub mComponentEvents_ItemAdded(ByVal VBComponent As VBIDE.VBComponent)
+Private Sub mComponentEvents_ItemRemoved(ByVal VBComponent As VBIDE.VBComponent)
+Private Sub mComponentEvents_ItemRenamed(ByVal VBComponent As VBIDE.VBComponent, ByVal OldName As String)
+Private Sub mComponentEvents_ItemSelected(ByVal VBComponent As VBIDE.VBComponent)
+Private Sub mFileEvents_AfterAddFile(ByVal VBProject As VBIDE.VBProject, ByVal FileType As VBIDE.vbext_FileType, ByVal FileName As String)
+Private Sub mFileEvents_AfterWriteFile(ByVal VBProject As VBIDE.VBProject, ByVal FileType As VBIDE.vbext_FileType, ByVal FileName As String, ByVal Result As Integer)
+Private Sub mFileEvents_BeforeLoadFile(ByVal VBProject As VBIDE.VBProject, FileNames() As String) 'this marks the beginning of a project loading...

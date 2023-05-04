@@ -1,0 +1,4 @@
+DisplayOnConnect
+IDTExtensibility
+mProjectLoading
+mComponentEvents

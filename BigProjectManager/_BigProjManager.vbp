@@ -3,22 +3,25 @@ Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\Windows\SysWOW64\st
 Reference=*\G{2DF8D04C-5BFA-101B-BDE5-00AA0044DE52}#2.0#0#C:\Program Files (x86)\Common Files\Microsoft Shared\VBA\MSO97RT.DLL#Microsoft Office 8.0 Object Library
 Reference=*\G{AC0714F2-3D04-11D1-AE7D-00A0C90F26F4}#1.0#0#C:\Program Files (x86)\Common Files\designer\MSADDNDR.TLB#Add-In Designer/Instance Control Library
 Reference=*\G{EF404E00-EDA6-101A-8DAF-00DD010F7EBB}#5.3#0#C:\Program Files (x86)\Microsoft Visual Studio\VB98\VB6EXT.OLB#Microsoft Visual Basic 6.0 Extensibility
+Object={831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0; mscomctl.ocx
 Designer=Connect.Dsr
+Class=CComponentEvent; CComponentEvent.cls
+Class=CSaveTree; CSaveTree.cls
+Class=CVBComponent; CVBComponent.cls
+Form=frmFind.frm
+UserControl=ucFilterList.ctl
+Module=Module1; Module1.bas
+Class=CFileSystem2; CFileSystem2.cls
+Class=CCmnDlg; CCmnDlg.cls
 UserDocument=UserDoc.dob
-UserControl=ucProjectExplorer.ctl
-Form=frmNewGroup.frm
-Class=clsItem; clsItem.cls
-Module=modGlobals; modGlobals.bas
-Class=clsGroup; clsGroup.cls
-Module=modExtensionIcon; modExtensionIcon.bas
 Startup="(None)"
 HelpFile=""
-Title="ProjEx"
-ExeName32="ProjEx.dll"
+Title="BigProjectManager"
+ExeName32="BigProjectManager.dll"
 Command32=""
-Name="ProjEx"
+Name="BigProjectManager"
 HelpContextID="0"
-Description="Alternative to the built-in explorer"
+Description="Big Project Manager"
 CompatibleMode="0"
 MajorVer=1
 MinorVer=0
@@ -43,4 +46,7 @@ MaxNumberOfThreads=1
 DebugStartupOption=0
 
 [fastBuild]
-fullPath=%ap%\ProjEx.dll
+fullPath=%ap%\BigProjectManager.dll
+
+[BigProjectManager]
+showAtStartup=False
