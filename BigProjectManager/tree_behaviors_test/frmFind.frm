@@ -10,13 +10,13 @@ Begin VB.Form frmFind
    ScaleWidth      =   5970
    StartUpPosition =   2  'CenterScreen
    Begin Project1.ucFilterList lv 
-      Height          =   6015
-      Left            =   120
+      Height          =   5535
+      Left            =   180
       TabIndex        =   0
       Top             =   120
       Width           =   5715
       _ExtentX        =   10081
-      _ExtentY        =   10610
+      _ExtentY        =   9763
    End
 End
 Attribute VB_Name = "frmFind"
@@ -25,7 +25,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
-Dim fso As New CFileSystem2
+
 Dim m_tv As TreeView
 
 Sub init(tv As TreeView)
@@ -34,14 +34,13 @@ Sub init(tv As TreeView)
     Dim n As Node, fn As String, li As ListItem
     
     lv.Clear
+    lv.SetIcons tv.ImageList
     
     For Each n In tv.Nodes
-        If n.Image <> "folder" And Len(n.Key) > 0 Then
-            fn = fso.FileNameFromPath(n.Key)
-            If Len(fn) > 0 Then
-                Set li = lv.AddItem(fn)
-                Set li.Tag = n
-            End If
+        If n.Image <> "folder" And n.Image <> "proj" Then
+            Set li = lv.AddItem(n.Text)
+            Set li.Tag = n
+            li.SmallIcon = n.Image
         End If
     Next
     

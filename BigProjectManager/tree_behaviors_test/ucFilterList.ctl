@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCTL.OCX"
+Object = "{831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0"; "mscomctl.ocx"
 Begin VB.UserControl ucFilterList 
    ClientHeight    =   6315
    ClientLeft      =   0
@@ -180,6 +180,11 @@ Private Declare Function LockWindowUpdate Lib "user32" (ByVal hwndLock As Long) 
 #If 0 Then
     Dim x, y, Column, nextone 'force lowercase so ide doesnt switch around on its own whim...
 #End If
+
+Sub SetIcons(smallIcons As ImageList)
+    Set lv.smallIcons = smallIcons
+    Set lvFilter.smallIcons = smallIcons
+End Sub
 
 Function ClearFilters()
     Set CustomFilters = New Collection

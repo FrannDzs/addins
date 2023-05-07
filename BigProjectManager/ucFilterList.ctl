@@ -33,6 +33,8 @@ Begin VB.UserControl ucFilterList
       LabelEdit       =   1
       LabelWrap       =   -1  'True
       HideSelection   =   0   'False
+      OLEDragMode     =   1
+      OLEDropMode     =   1
       FullRowSelect   =   -1  'True
       GridLines       =   -1  'True
       _Version        =   393217
@@ -40,6 +42,8 @@ Begin VB.UserControl ucFilterList
       BackColor       =   -2147483643
       BorderStyle     =   1
       Appearance      =   1
+      OLEDragMode     =   1
+      OLEDropMode     =   1
       NumItems        =   0
    End
    Begin MSComctlLib.ListView lv 
@@ -54,6 +58,8 @@ Begin VB.UserControl ucFilterList
       LabelEdit       =   1
       LabelWrap       =   -1  'True
       HideSelection   =   0   'False
+      OLEDragMode     =   1
+      OLEDropMode     =   1
       FullRowSelect   =   -1  'True
       GridLines       =   -1  'True
       _Version        =   393217
@@ -61,6 +67,8 @@ Begin VB.UserControl ucFilterList
       BackColor       =   -2147483643
       BorderStyle     =   1
       Appearance      =   1
+      OLEDragMode     =   1
+      OLEDropMode     =   1
       NumItems        =   0
    End
    Begin VB.Image imgX 
@@ -169,6 +177,7 @@ Event MouseUp(Button As Integer, shift As Integer, x As Single, Y As Single)
 Event OnCustomFilter(ByVal prefix As String, ByVal fullFilter As String)
 Event KeyPress(keycode As Integer)
 Event KeyDown(keycode As Integer, shift As Integer)
+Event OLEStartDrag(Data As MSComctlLib.DataObject, AllowedEffects As Long)
 
 Const LVM_FIRST = &H1000
 Const LVM_GETSELECTEDCOUNT = (LVM_FIRST + 50)
@@ -531,6 +540,14 @@ End Sub
 
 Private Sub lv_KeyPress(KeyAscii As Integer)
     RaiseEvent KeyPress(KeyAscii)
+End Sub
+
+Private Sub lv_OLEStartDrag(Data As MSComctlLib.DataObject, AllowedEffects As Long)
+    RaiseEvent OLEStartDrag(Data, AllowedEffects)
+End Sub
+
+Private Sub lvFilter_OLEStartDrag(Data As MSComctlLib.DataObject, AllowedEffects As Long)
+    RaiseEvent OLEStartDrag(Data, AllowedEffects)
 End Sub
 
 Private Sub lvFilter_KeyPress(KeyAscii As Integer)

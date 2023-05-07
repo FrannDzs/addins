@@ -178,7 +178,6 @@ Attribute SaveTree.VB_VarHelpID = -1
 'template for dragging nodes around: https://www.developerfusion.com/article/77/treeview-control/8/
 
 Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
-Private blnDragging As Boolean
 Private selNode As Node
 Dim projPath As String
 
@@ -708,10 +707,15 @@ Private Sub tv_MouseUp(Button As Integer, shift As Integer, x As Single, Y As Si
             hasSource = Not (selNode.Image = "folder" Or selNode.Image = "proj")
             mnuViewSource.Visible = hasSource
             mnuViewDesigner.Visible = hasSource
+            mnuMove.Visible = Not hasSource 'for source nodes we can use drag drop to easily position and order now..less clutter
+            mnuSpacer2.Visible = hasSource
             If hasSource Then
                 Set c = selNode.tag
                 mnuViewDesigner.Visible = typeHasDesigner(c.Typ)
             End If
+            mnuExtra.Visible = (selNode.Image = "proj")
+            mnuSpacer.Visible = mnuExtra.Visible
+            If mnuExtra.Visible Then mnuMove.Visible = False
         End If
         PopupMenu mnuPopup
     End If

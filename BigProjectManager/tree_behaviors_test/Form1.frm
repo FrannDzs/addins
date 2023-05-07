@@ -4,41 +4,131 @@ Begin VB.Form Form1
    Caption         =   "Form1"
    ClientHeight    =   5640
    ClientLeft      =   225
-   ClientTop       =   870
+   ClientTop       =   570
    ClientWidth     =   9555
    LinkTopic       =   "Form1"
    ScaleHeight     =   5640
    ScaleWidth      =   9555
-   StartUpPosition =   3  'Windows Default
+   StartUpPosition =   2  'CenterScreen
+   Begin MSComctlLib.ListView lv 
+      Height          =   1755
+      Left            =   6660
+      TabIndex        =   8
+      Top             =   540
+      Width           =   2655
+      _ExtentX        =   4683
+      _ExtentY        =   3096
+      View            =   3
+      LabelEdit       =   1
+      LabelWrap       =   -1  'True
+      HideSelection   =   -1  'True
+      OLEDragMode     =   1
+      OLEDropMode     =   1
+      _Version        =   393217
+      ForeColor       =   -2147483640
+      BackColor       =   -2147483643
+      BorderStyle     =   1
+      Appearance      =   1
+      OLEDragMode     =   1
+      OLEDropMode     =   1
+      NumItems        =   1
+      BeginProperty ColumnHeader(1) {BDD1F052-858B-11D1-B16A-00C0F0283628} 
+         Object.Width           =   2540
+      EndProperty
+   End
+   Begin VB.CommandButton cmdBottom 
+      Caption         =   "B"
+      BeginProperty Font 
+         Name            =   "Verdana"
+         Size            =   9.75
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   255
+      Left            =   1320
+      TabIndex        =   7
+      Top             =   120
+      Width           =   255
+   End
+   Begin VB.CommandButton cmdTop 
+      Caption         =   "T"
+      BeginProperty Font 
+         Name            =   "Verdana"
+         Size            =   9.75
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   255
+      Left            =   960
+      TabIndex        =   6
+      Top             =   120
+      Width           =   255
+   End
+   Begin VB.CommandButton cmdFind 
+      Appearance      =   0  'Flat
+      Height          =   315
+      Left            =   3420
+      Picture         =   "Form1.frx":0000
+      Style           =   1  'Graphical
+      TabIndex        =   5
+      Top             =   120
+      Width           =   375
+   End
+   Begin VB.CommandButton cmdDown 
+      Appearance      =   0  'Flat
+      Height          =   255
+      Left            =   540
+      Picture         =   "Form1.frx":048A
+      Style           =   1  'Graphical
+      TabIndex        =   4
+      Top             =   120
+      Width           =   255
+   End
+   Begin VB.CommandButton cmdUp 
+      Appearance      =   0  'Flat
+      BeginProperty Font 
+         Name            =   "Wingdings"
+         Size            =   9.75
+         Charset         =   2
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   255
+      Left            =   120
+      Picture         =   "Form1.frx":07CE
+      Style           =   1  'Graphical
+      TabIndex        =   3
+      Top             =   120
+      Width           =   255
+   End
    Begin VB.CommandButton Command1 
-      Caption         =   "Command1"
+      Caption         =   "rebuilt tree fresh"
       Height          =   495
       Left            =   4320
-      TabIndex        =   3
+      TabIndex        =   2
       Top             =   1800
-      Width           =   1215
+      Width           =   1695
    End
    Begin VB.ListBox List1 
       Height          =   2400
       Left            =   4200
-      TabIndex        =   2
+      TabIndex        =   1
       Top             =   2580
       Width           =   5295
-   End
-   Begin VB.TextBox Text1 
-      Height          =   315
-      Left            =   5820
-      OLEDropMode     =   1  'Manual
-      TabIndex        =   1
-      Text            =   "Text1"
-      Top             =   840
-      Width           =   2235
    End
    Begin MSComctlLib.TreeView tvProject 
       Height          =   4035
       Left            =   120
       TabIndex        =   0
-      Top             =   180
+      Top             =   420
       Width           =   3675
       _ExtentX        =   6482
       _ExtentY        =   7117
@@ -65,67 +155,76 @@ Begin VB.Form Form1
       BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
          NumListImages   =   14
          BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":0000
+            Picture         =   "Form1.frx":0B12
             Key             =   "folder"
          EndProperty
          BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":059A
+            Picture         =   "Form1.frx":10AC
             Key             =   "form"
          EndProperty
          BeginProperty ListImage3 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":08EC
+            Picture         =   "Form1.frx":13FE
             Key             =   ""
          EndProperty
          BeginProperty ListImage4 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":115E
+            Picture         =   "Form1.frx":1C70
             Key             =   ""
          EndProperty
          BeginProperty ListImage5 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":14B0
+            Picture         =   "Form1.frx":1FC2
             Key             =   "mdichild"
          EndProperty
          BeginProperty ListImage6 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":1804
+            Picture         =   "Form1.frx":2316
             Key             =   "bas"
          EndProperty
          BeginProperty ListImage7 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":1D9E
+            Picture         =   "Form1.frx":28B0
             Key             =   "cls"
          EndProperty
          BeginProperty ListImage8 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":2338
+            Picture         =   "Form1.frx":2E4A
             Key             =   "prop"
          EndProperty
          BeginProperty ListImage9 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":28D2
+            Picture         =   "Form1.frx":33E4
             Key             =   "ctl"
          EndProperty
          BeginProperty ListImage10 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":2E6C
+            Picture         =   "Form1.frx":397E
             Key             =   "property"
          EndProperty
          BeginProperty ListImage11 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":2FC6
+            Picture         =   "Form1.frx":3AD8
             Key             =   "func"
          EndProperty
          BeginProperty ListImage12 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":3318
+            Picture         =   "Form1.frx":3E2A
             Key             =   "dob"
          EndProperty
          BeginProperty ListImage13 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":38B2
+            Picture         =   "Form1.frx":43C4
             Key             =   "connect"
          EndProperty
          BeginProperty ListImage14 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "Form1.frx":3E4C
+            Picture         =   "Form1.frx":495E
             Key             =   "proj"
          EndProperty
       EndProperty
+   End
+   Begin VB.Label Label1 
+      Caption         =   "can drag drop from here"
+      Height          =   255
+      Left            =   6900
+      TabIndex        =   9
+      Top             =   120
+      Width           =   2475
    End
    Begin VB.Menu mnuPopup 
       Caption         =   "mnuPopup"
       Begin VB.Menu mnuMove 
          Caption         =   "Move"
+         Visible         =   0   'False
          Begin VB.Menu mnuMoveUp 
             Caption         =   "Up"
          End
@@ -144,6 +243,7 @@ Begin VB.Form Form1
       End
       Begin VB.Menu mnuFind 
          Caption         =   "Find"
+         Visible         =   0   'False
       End
       Begin VB.Menu mnuAdd 
          Caption         =   "Add"
@@ -175,8 +275,32 @@ Attribute VB_Exposed = False
 '// control and/or program)
 Private blnDragging As Boolean
 Private selNode As Node
-Dim dlg As New CCmnDlg
-Dim fso As New CFileSystem2
+
+
+ 'ok if you dont have these, file features will disable..
+ 'https://github.com/dzzie/libs/tree/master/vbDevKit
+Dim dlg As Object 'New CCmnDlg
+Dim fso As Object ' New CFileSystem2
+
+Private Sub cmdBottom_Click()
+    mnuMoveBottom_Click
+End Sub
+
+Private Sub cmdDown_Click()
+    mnuMoveDown_Click
+End Sub
+
+Private Sub cmdFind_Click()
+    frmFind.init tvProject
+End Sub
+
+Private Sub cmdTop_Click()
+    mnuMoveTop_Click
+End Sub
+
+Private Sub cmdUp_Click()
+    mnuMoveUp_Click
+End Sub
 
 Private Sub Command1_Click()
     Form_Load
@@ -185,6 +309,17 @@ End Sub
 Private Sub Form_Load()
     '// fill the control with some dummy nodes
     Dim n As Node
+    
+    On Error Resume Next
+    mnuPopup.Visible = False
+    
+    Set dlg = CreateObject("vbdevkit.CCmnDlg")
+    Set fso = CreateObject("vbdevkit.CFileSystem2")
+    
+    Me.Caption = "Treeview drag drop demo"
+    If dlg Is Nothing Then
+        Me.Caption = Me.Caption & " - File drag drop from explorer disabled no vbdevkit"
+    End If
     
     tvProject.Nodes.Clear
     
@@ -211,7 +346,7 @@ Private Sub Form_Load()
         
     End With
     
-
+    lv_init tvProject
     For Each n In tvProject.Nodes
         n.Expanded = True
     Next
@@ -224,6 +359,11 @@ Private Sub mnuAddFolder_Click()
         Dim f As String, p As Node, fn As String
         
         If selNode Is Nothing Then selNode = tvProject.Nodes(1)
+        
+        If dlg Is Nothing Then
+            MsgBox "vbdevkit not found, feature disabled.."
+            Exit Sub
+        End If
         
         f = dlg.FolderDialog2()
         If Len(f) = 0 Then Exit Sub
@@ -478,11 +618,6 @@ Private Sub mnuRemoveItem_Click()
     
 End Sub
 
-Private Sub Text1_OLEDragDrop(Data As DataObject, Effect As Long, Button As Integer, shift As Integer, x As Single, y As Single)
-    On Error Resume Next
-    Text1 = Data.Files(1)
-End Sub
-
 Private Sub tvProject_MouseDown(Button As Integer, shift As Integer, x As Single, y As Single)
     Dim nodNode As Node
     '// get the node we are over
@@ -504,7 +639,7 @@ End Sub
 '// this is where you assign the effect and the data.
 Private Sub tvProject_OLEStartDrag(Data As MSComctlLib.DataObject, AllowedEffects As Long)
     
-    List1.AddItem "start drag"
+    List1.AddItem "tv start drag"
     
     '// Set the effect to move
     AllowedEffects = vbDropEffectMove
@@ -513,6 +648,36 @@ Private Sub tvProject_OLEStartDrag(Data As MSComctlLib.DataObject, AllowedEffect
     '// we are dragging from this control
     blnDragging = True
 End Sub
+
+Private Sub lv_OLEStartDrag(Data As MSComctlLib.DataObject, AllowedEffects As Long)
+    On Error Resume Next
+    Dim n As Node
+    List1.AddItem "lv start drag"
+    AllowedEffects = vbDropEffectMove
+    Set n = lv.SelectedItem.Tag
+    Data.SetData n.Key
+    blnDragging = True
+End Sub
+
+Sub lv_init(tv As TreeView)
+
+    On Error Resume Next
+    Dim n As Node, fn As String, li As ListItem
+    
+ 
+    Set lv.smallIcons = tv.ImageList
+    
+    For Each n In tv.Nodes
+        If n.Image <> "folder" And n.Image <> "proj" Then
+            Set li = lv.ListItems.Add(, , n.Text, , n.Image)
+            Set li.Tag = n
+        End If
+    Next
+    
+    Me.Visible = True
+    
+End Sub
+
 
 'note if your running as admin, you cant drop files from the desktop as thats not admin..
 
@@ -524,14 +689,13 @@ Private Sub tvProject_OLEDragOver(Data As MSComctlLib.DataObject, Effect As Long
     '// set the effect
     'List1.AddItem "drag over"
     
-    
+    List1.AddItem "tv drag over"
     Effect = vbDropEffectMove
     '// get the node that the object is being dragged over
     Set nodNode = tvProject.HitTest(x, y)
     If nodNode Is Nothing Or blnDragging = False Then
         '// the dragged object is not over a node, invalid drop target
         '// or the object is not from this control.
-        
         If Not Data.GetFormat(vbCFFiles) Then
             Effect = vbDropEffectNone 'setting this will block the transfer further..
         End If
@@ -604,7 +768,7 @@ Private Sub tvProject_OLEDragDrop(Data As MSComctlLib.DataObject, Effect As Long
     Dim strSourceKey As String
     Dim nodTarget    As Node
     Dim f As String, fn As String, p As Node, icon As String
-    Dim positionNode As Node
+    Dim positionNode As Node, z
     
     'List1.AddItem "drag drop"
     
@@ -627,23 +791,31 @@ Private Sub tvProject_OLEDragDrop(Data As MSComctlLib.DataObject, Effect As Long
         End If
     ElseIf Data.GetFormat(vbCFFiles) Then
         
-        f = Data.Files(1)
-        If NodeExists(f) Then
-            MsgBox "This path already exists in tree"
+        If dlg Is Nothing Then 'drag drop folder or files from explorer to treeview
+            MsgBox "vbdevkit not found, feature disabled.."
             Exit Sub
         End If
         
-        If fso.FolderExists(f) Then
-            fn = fso.FolderName(f)
-            Set p = tvProject.Nodes.Add(nodTarget, tvwChild, f, fn, "folder")
-            AddFolderToTree f, p
-        Else
-            fn = fso.FileNameFromPath(CStr(f))
-            If fileTypeOk(f, icon) Then
-                Set p = tvProject.Nodes.Add(nodTarget, tvwChild, f, fn, icon)
-                p.Tag = f
+        For Each z In Data.Files
+            f = z
+            If NodeExists(f) Then
+                MsgBox "This path already exists in tree"
+                Exit Sub
             End If
-        End If
+            
+            If fso.FolderExists(f) Then
+                fn = fso.FolderName(f)
+                Set p = tvProject.Nodes.Add(nodTarget, tvwChild, f, fn, "folder")
+                AddFolderToTree f, p
+            Else
+                fn = fso.FileNameFromPath(CStr(f))
+                If fileTypeOk(f, icon) Then
+                    Set p = tvProject.Nodes.Add(nodTarget, tvwChild, f, fn, icon)
+                    p.Tag = f
+                End If
+            End If
+        Next
+        
     End If
         
     '// NOTE: You will also need to update the key to reflect the changes

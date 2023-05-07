@@ -98,3 +98,14 @@ Private Sub lv_ItemClick(ByVal Item As MSComctlLib.ListItem)
     n.selected = True
     Set selNode = n
 End Sub
+
+'allow drag drop from listview to treeview in user document
+Private Sub lv_OLEStartDrag(Data As MSComctlLib.DataObject, AllowedEffects As Long)
+    On Error Resume Next
+    Dim c As CVBComponent, n As Node
+    AllowedEffects = vbDropEffectMove
+    Set c = lv.SelectedItem.tag
+    Set n = c.n
+    Data.SetData n.key
+    blnDragging = True
+End Sub
